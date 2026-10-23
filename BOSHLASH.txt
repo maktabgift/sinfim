@@ -1,0 +1,34 @@
+SINF DAFTARI - VS CODE UCHUN TAYYOR LOYIHA
+
+1. ZIP faylni arxivdan chiqaring.
+2. maktabgift.code-workspace faylini VS Code bilan oching.
+3. Tavsiya qilingan Live Server kengaytmasini o'rnating.
+4. index.html ni o'ng tugma bilan bosing va Open with Live Server ni tanlang.
+5. http://127.0.0.1:5500/index.html manzili ochiladi.
+
+BITTA FAYLLI VARIANT
+Sinf-daftari-bitta-fayl.html ichida HTML, CSS va JavaScript birlashtirilgan.
+Uni o'zini ham VS Code yoki brauzerda ochishingiz mumkin.
+HTML/CSS/JavaScriptni alohida tahrirlash uchun index.html, styles.css va script.js dan foydalaning.
+Npm paketlari yoki alohida backend server talab qilinmaydi.
+
+LOGINLAR VA ALOHIDA BAZALAR
+Ism-familiya yozilganda ali.valiyev kabi login avtomatik yaratiladi.
+Band bo'lsa, ali.valiyev.2 kabi keyingi bo'sh login taklif qilinadi.
+Loginni qo'lda o'zgartirish mumkin; u ism-familiyaga mos bo'lishi kerak.
+O'quvchi o'chirilsa ham eski login boshqa hisobga qayta berilmaydi.
+Nuqta bilan farqlangan nom alohida login hisoblanadi; katta-kichik harf farqlanmaydi.
+Dasturchi oynasidagi Bazalar bo'limida Loginlar, O'quvchilar va Baholar alohida ko'rinadi.
+Ular brauzerning IndexedDB bazasida alohida bo'limlarda saqlanadi.
+Avvalgi localStorage yozuvlari avtomatik ko'chiriladi; IndexedDB mavjud bo'lmasa, mahalliy zaxira ishlaydi.
+JSON eksport/importi berilgan loginlar reyestrini ham saqlaydi.
+
+Ma'lumotlar va login reyestri shu brauzer hamda manzilga tegishli.
+Brauzerning barcha sayt ma'lumotlarini o'chirsangiz, mahalliy reyestr yo'qolishi mumkin.
+Muntazam JSON eksport orqali zaxira oling; boshqa qurilma/manzilga ko'chirishda JSON import qiling.
+HTML/ZIP ichida brauzeringizdagi haqiqiy o'quvchi va baholar avtomatik saqlanmaydi.
+XLSX importi internetdan kutubxona yuklaydi; CSV importi internet talab qilmaydi.
+
+TEKSHIRUV
+Node.js mavjud bo'lsa: node --test tests/login-registry.test.cjs
+Batafsil ma'lumot README.md faylida.

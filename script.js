@@ -1,0 +1,6734 @@
+(() => {
+  "use strict";
+  const appScriptURL = document.currentScript?.src || new URL("script.js", document.baseURI).href;
+
+  // ===== Curriculum and grade helpers =====
+  const GRADES = Array.from({ length: 11 }, (_, i) => i + 1);
+  const CURRICULUM_SEED = {
+    1: [
+      "Ona tili",
+      "Matematika",
+      "Tabiatshunoslik",
+      "Tasviriy san’at",
+      "Musiqa",
+      "Jismoniy tarbiya",
+      "Texnologiya",
+      "Informatika va axborot texnologiyalari",
+    ],
+    2: [
+      "Ona tili",
+      "Matematika",
+      "Tabiatshunoslik",
+      "Tasviriy san’at",
+      "Musiqa",
+      "Jismoniy tarbiya",
+      "Texnologiya",
+      "Informatika va axborot texnologiyalari",
+      "Ingliz tili",
+    ],
+    3: [
+      "Ona tili",
+      "Matematika",
+      "Tabiatshunoslik",
+      "Tasviriy san’at",
+      "Musiqa",
+      "Jismoniy tarbiya",
+      "Texnologiya",
+      "Informatika va axborot texnologiyalari",
+      "Ingliz tili",
+    ],
+    4: [
+      "Ona tili",
+      "Matematika",
+      "Tabiatshunoslik",
+      "Tasviriy san’at",
+      "Musiqa",
+      "Jismoniy tarbiya",
+      "Texnologiya",
+      "Informatika va axborot texnologiyalari",
+      "Ingliz tili",
+    ],
+    5: [
+      "Ona tili",
+      "Adabiyot",
+      "Matematika",
+      "O‘zbekiston tarixi",
+      "Jahon tarixi",
+      "Biologiya",
+      "Geografiya",
+      "Informatika",
+      "Ingliz tili",
+      "Rus tili",
+      "Tasviriy san’at",
+      "Musiqa",
+      "Jismoniy tarbiya",
+      "Texnologiya",
+    ],
+    6: [
+      "Ona tili",
+      "Adabiyot",
+      "Matematika",
+      "O‘zbekiston tarixi",
+      "Jahon tarixi",
+      "Biologiya",
+      "Geografiya",
+      "Informatika",
+      "Ingliz tili",
+      "Rus tili",
+      "Tasviriy san’at",
+      "Musiqa",
+      "Jismoniy tarbiya",
+      "Texnologiya",
+    ],
+    7: [
+      "Ona tili",
+      "Adabiyot",
+      "Matematika",
+      "Algebra",
+      "Geometriya",
+      "O‘zbekiston tarixi",
+      "Jahon tarixi",
+      "Biologiya",
+      "Geografiya",
+      "Fizika",
+      "Informatika",
+      "Ingliz tili",
+      "Rus tili",
+      "Tasviriy san’at",
+      "Musiqa",
+      "Jismoniy tarbiya",
+      "Texnologiya",
+      "Chizmachilik",
+    ],
+    8: [
+      "Ona tili",
+      "Adabiyot",
+      "Matematika",
+      "Algebra",
+      "Geometriya",
+      "O‘zbekiston tarixi",
+      "Jahon tarixi",
+      "Biologiya",
+      "Geografiya",
+      "Fizika",
+      "Kimyo",
+      "Informatika",
+      "Ingliz tili",
+      "Rus tili",
+      "Tasviriy san’at",
+      "Musiqa",
+      "Jismoniy tarbiya",
+      "Texnologiya",
+      "Chizmachilik",
+      "Hayot faoliyati xavfsizligi",
+    ],
+    9: [
+      "Ona tili",
+      "Adabiyot",
+      "Matematika",
+      "Algebra",
+      "Geometriya",
+      "O‘zbekiston tarixi",
+      "Jahon tarixi",
+      "Biologiya",
+      "Geografiya",
+      "Fizika",
+      "Kimyo",
+      "Informatika",
+      "Ingliz tili",
+      "Rus tili",
+      "Tasviriy san’at",
+      "Musiqa",
+      "Jismoniy tarbiya",
+      "Texnologiya",
+      "Chizmachilik",
+      "Hayot faoliyati xavfsizligi",
+      "Huquq asoslari",
+    ],
+    10: [
+      "Ona tili va adabiyot",
+      "Matematika",
+      "Ingliz tili",
+      "Rus tili",
+      "O‘zbekiston tarixi",
+      "Jahon tarixi",
+      "Biologiya",
+      "Kimyo",
+      "Fizika",
+      "Geografiya",
+      "Informatika",
+      "Huquq asoslari",
+      "Jismoniy tarbiya",
+      "Hayot faoliyati xavfsizligi",
+      "Ixtisoslik fan (tanlov)",
+    ],
+    11: [
+      "Ona tili va adabiyot",
+      "Matematika",
+      "Ingliz tili",
+      "Rus tili",
+      "O‘zbekiston tarixi",
+      "Jahon tarixi",
+      "Biologiya",
+      "Kimyo",
+      "Fizika",
+      "Geografiya",
+      "Informatika",
+      "Huquq asoslari",
+      "Jismoniy tarbiya",
+      "Hayot faoliyati xavfsizligi",
+      "Ixtisoslik fan (tanlov)",
+    ],
+  };
+  function subjectIdForName(name) {
+    return `subject-${String(name)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLocaleLowerCase("uz")
+      .replace(/[’‘ʻ`']/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}`;
+  }
+  function defaultSubjectNames() {
+    return [
+      ...new Set([
+        "Matematika",
+        "Ona tili",
+        "Adabiyot",
+        "Ingliz tili",
+        "Tarix",
+        "Biologiya",
+        ...Object.values(CURRICULUM_SEED).flat(),
+      ]),
+    ];
+  }
+  const STANDARD_SECTIONS = ["A", "B", "D", "E"];
+  function parseClassIdentity(name) {
+    const value = String(name || "").trim(),
+      match = value.match(/^\s*(\d{1,2})\s*[-–]\s*(.{1,10}?)\s*$/u);
+    if (match) return { grade: Number(match[1]), section: match[2].trim() };
+    const compact = value.match(
+      /^\s*(\d{1,2})\s*([A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]{1,10})\s*$/u,
+    );
+    if (compact)
+      return { grade: Number(compact[1]), section: compact[2].trim() };
+    const prefix = value.match(/^\s*(\d{1,2})\s+(.{1,10}?)\s*$/u);
+    return prefix
+      ? { grade: Number(prefix[1]), section: prefix[2].trim() }
+      : null;
+  }
+  function defaultClasses() {
+    return GRADES.flatMap((grade) =>
+      STANDARD_SECTIONS.map((section) => ({
+        id: `class-${grade}-${section.toLowerCase()}`,
+        name: `${grade}-${section}`,
+        grade,
+        section,
+      })),
+    );
+  }
+  function seedProvisionalCurriculum(data) {
+    const byName = new Map(
+      data.subjects.map((name) => [name.toLocaleLowerCase("uz"), name]),
+    );
+    const rows = [];
+    for (const grade of GRADES)
+      for (const seedName of CURRICULUM_SEED[grade]) {
+        let subject = byName.get(seedName.toLocaleLowerCase("uz"));
+        if (!subject) {
+          subject = seedName;
+          data.subjects.push(subject);
+          byName.set(subject.toLocaleLowerCase("uz"), subject);
+        }
+        rows.push({
+          id: id("curriculum"),
+          grade,
+          subjectId: subjectIdForName(subject),
+          weeklyHours: null,
+        });
+      }
+    return rows;
+  }
+  function migrateData(data, isNewInstall = false) {
+    if (!data || typeof data !== "object")
+      throw new Error("Saqlangan ma’lumotlar noto‘g‘ri.");
+    data.version = 1;
+    data.settings = data.settings || {
+      weights: {
+        avgMultiplier: 10,
+        unexcusedAbsencePenalty: 3,
+        skippedLessonPenalty: 2,
+      },
+      gradeMin: 1,
+      gradeMax: 10,
+      lessonsPerDay: 7,
+      showRankingToStudents: false,
+    };
+    data.settings.weights = data.settings.weights || {
+      avgMultiplier: 20,
+      unexcusedAbsencePenalty: 3,
+      skippedLessonPenalty: 2,
+    };
+    if (data.settings.gradeMin == null) data.settings.gradeMin = isNewInstall ? 1 : 2;
+    if (data.settings.gradeMax == null) data.settings.gradeMax = isNewInstall ? 10 : 5;
+    if (data.settings.weights.avgMultiplier == null)
+      data.settings.weights.avgMultiplier = isNewInstall ? 10 : 20;
+    if (
+      !isNewInstall &&
+      data.settings.gradeMin === 2 &&
+      data.settings.gradeMax === 5 &&
+      data.settings.weights.avgMultiplier === 20
+    ) {
+      data.settings.gradeMin = 1;
+      data.settings.gradeMax = 10;
+      data.settings.weights.avgMultiplier = 10;
+    }
+    if (data.settings.lessonsPerDay == null) data.settings.lessonsPerDay = 7;
+    if (data.settings.showRankingToStudents == null)
+      data.settings.showRankingToStudents = false;
+    data.auth = data.auth || {};
+    data.auth.sessionVersion = sessionVersionOf(data.auth);
+    data.auth.teacherUsername = data.auth.teacherUsername || "teacher";
+    data.classes = Array.isArray(data.classes) ? data.classes : [];
+    if (!data.classes.length) data.classes = defaultClasses();
+    else
+      data.classes = data.classes.map((c) => {
+        const parsed = parseClassIdentity(c.name),
+          grade =
+            Number.isInteger(Number(c.grade)) &&
+            Number(c.grade) >= 1 &&
+            Number(c.grade) <= 11
+              ? Number(c.grade)
+              : parsed && parsed.grade >= 1 && parsed.grade <= 11
+                ? parsed.grade
+                : 5,
+          section = String(c.section || parsed?.section || "A").trim() || "A";
+        return { ...c, grade, section };
+      });
+    if (data.classes.length) ensureStandardSections(data);
+    const legacyNames = Array.isArray(data.subjects)
+      ? data.subjects
+          .map((s) => (typeof s === "string" ? s : String(s?.name || "")))
+          .filter(Boolean)
+      : [];
+    data.subjects = [
+      ...new Map(
+        [
+          ...defaultSubjectNames(),
+          ...legacyNames,
+          ...(data.grades || []).map((g) => g.subject),
+        ]
+          .filter(Boolean)
+          .map((name) => [name.toLocaleLowerCase("uz"), name]),
+      ).values(),
+    ];
+    data.students = Array.isArray(data.students) ? data.students : [];
+    for (const student of data.students)
+      student.sessionVersion = sessionVersionOf(student);
+    data.attendance = Array.isArray(data.attendance) ? data.attendance : [];
+    data.grades = Array.isArray(data.grades) ? data.grades : [];
+    if (!Array.isArray(data.curriculum)) data.curriculum = [];
+    else
+      data.curriculum = data.curriculum.map((row) => ({
+        ...row,
+        grade: Number(row.grade),
+        weeklyHours:
+          row.weeklyHours === "" || row.weeklyHours == null
+            ? null
+            : Number(row.weeklyHours),
+      }));
+    if (typeof data.curriculumConfirmed !== "boolean")
+      data.curriculumConfirmed = false;
+    if (!data.curriculum.length && !data.curriculumConfirmed)
+      data.curriculum = seedProvisionalCurriculum(data);
+    data.timetable = Array.isArray(data.timetable)
+      ? data.timetable.map((row) => ({
+          ...row,
+          weekday: Number(row.weekday ?? row.day),
+          lessonNo: Number(row.lessonNo ?? row.lesson),
+          startTime: row.startTime ?? "",
+          endTime: row.endTime ?? "",
+        }))
+      : [];
+    data.weeklySnapshots = Array.isArray(data.weeklySnapshots)
+      ? data.weeklySnapshots
+      : [];
+    data.importLog = Array.isArray(data.importLog) ? data.importLog : [];
+    data.teachers = Array.isArray(data.teachers) ? data.teachers : [];
+    data.teachers = data.teachers.map((teacher) => ({
+      ...teacher,
+      id: teacher.id || id("teacher"),
+      label: String(teacher.label || teacher.fullName || "O‘qituvchi"),
+      login: String(teacher.login || teacher.username || ""),
+      fullName: String(teacher.fullName || teacher.label || "O‘qituvchi"),
+      passwordHash: teacher.passwordHash || "",
+      active: teacher.active !== false,
+      mustChangePassword: teacher.mustChangePassword === true,
+      sessionVersion: sessionVersionOf(teacher),
+      assignments: Array.isArray(teacher.assignments)
+        ? teacher.assignments
+        : [],
+    }));
+    for (const teacher of data.teachers) delete teacher.classIds;
+    if (!data.teachers.length && data.auth.teacherUsername) {
+      data.teachers.push({
+        id: "teacher-main",
+        label: "O‘qituvchi",
+        fullName: "O‘qituvchi",
+        login: data.auth.teacherUsername,
+        passwordHash: data.auth.teacherPasswordHash || "",
+        active: true,
+        mustChangePassword: false,
+        sessionVersion: 0,
+        assignments: [],
+      });
+    }
+    data.classes = data.classes.map((klass) => ({
+      ...klass,
+      teacherId: klass.teacherId || null,
+    }));
+    return data;
+  }
+  function cloneData(data) {
+    return JSON.parse(JSON.stringify(data));
+  }
+  function setClassTeacher(db, classId, teacherId, confirmed = false) {
+    const next = cloneData(db),
+      klass = next.classes.find((item) => item.id === classId),
+      teacher = teacherId
+        ? next.teachers.find((item) => item.id === teacherId)
+        : null;
+    if (!klass || (teacherId && !teacher))
+      return { ok: false, message: "Sinf yoki o‘qituvchi topilmadi.", db: next };
+    if (teacherId && next.classes.some((item) => item.id !== classId && item.teacherId === teacherId))
+      return { ok: false, message: "Bu o‘qituvchi boshqa sinfda sinf rahbari.", db: next };
+    if (klass.teacherId && klass.teacherId !== teacherId && !confirmed)
+      return { ok: false, message: "Bu sinfda allaqachon sinf rahbari bor. Almashtirilsinmi?", db: next };
+    klass.teacherId = teacherId || null;
+    return { ok: true, message: "Sinf rahbari saqlandi.", db: next };
+  }
+  function addAssignment(db, teacherId, classId, subjectId) {
+    const next = cloneData(db),
+      teacher = next.teachers.find((item) => item.id === teacherId),
+      klass = next.classes.find((item) => item.id === classId);
+    if (!teacher || !klass || !subjectId)
+      return { ok: false, message: "Fan va kamida bitta sinf tanlang.", db: next };
+    if (!next.curriculum.some((row) => Number(row.grade) === Number(klass.grade) && row.subjectId === subjectId))
+      return { ok: false, message: `Bu fan ${klass.grade}-sinf o‘quv rejasida yo‘q.`, db: next };
+    if (next.teachers.some((item) =>
+      (item.assignments || []).some((assignment) => assignment.classId === classId && assignment.subjectId === subjectId),
+    ))
+      return { ok: false, message: "Bu fan bu sinf uchun allaqachon biriktirilgan.", db: next };
+    teacher.assignments = Array.isArray(teacher.assignments) ? teacher.assignments : [];
+    teacher.assignments.push({ classId, subjectId });
+    return { ok: true, message: "Fan va sinf biriktirildi.", db: next };
+  }
+  function ensureStandardSections(data, includeA = false) {
+    const hasClass = (grade, section) =>
+        data.classes.some(
+          (item) =>
+            Number(item.grade) === grade &&
+            (String(item.section || "").toLocaleLowerCase("uz") ===
+              section.toLocaleLowerCase("uz") ||
+              String(item.name || "").toLocaleLowerCase("uz") ===
+                `${grade}-${section}`.toLocaleLowerCase("uz")),
+        ),
+      usedIds = new Set(data.classes.map((item) => item.id));
+    let added = 0;
+    for (const grade of GRADES)
+      for (const section of includeA
+        ? STANDARD_SECTIONS
+        : STANDARD_SECTIONS.slice(1))
+        if (!hasClass(grade, section)) {
+          let classId = `class-${grade}-${section.toLowerCase()}`;
+          if (usedIds.has(classId)) classId = id("class");
+          data.classes.push({
+            id: classId,
+            name: `${grade}-${section}`,
+            grade,
+            section,
+          });
+          usedIds.add(classId);
+          added++;
+        }
+    return added;
+  }
+  function applyRequestedLoginCredentials(data) {
+    // Apply the owner's requested credentials once, preserving later password changes.
+    if (data.auth.requestedLoginsRevision === 1) return data;
+    const developerHash = "e00884b83db1cc66573a6cb329603ed1b152f326cbb5183a8effaa36934d352a",
+      teacherHash = "cde383eee8ee7a4400adf7a15f716f179a2eb97646b37e089eb8d6d04e663416";
+    let teacher = data.teachers.find((record) => normalizedLogin(record.login) === "teacher")
+      || data.teachers[0];
+    if (!teacher) {
+      teacher = {
+        id: id("teacher"),
+        label: "O‘qituvchi",
+        fullName: "O‘qituvchi",
+        assignments: [],
+        sessionVersion: 0,
+      };
+      data.teachers.push(teacher);
+    }
+    // The first teacher is the existing legacy account alias; keep every ID/binding.
+    const teacherIndex = data.teachers.indexOf(teacher);
+    if (teacherIndex > 0) data.teachers.unshift(data.teachers.splice(teacherIndex, 1)[0]);
+    if (data.auth.developerPasswordHash) invalidateUserSessions(data.auth);
+    if (teacher.passwordHash) invalidateUserSessions(teacher);
+    data.auth.developerUsername = "developer";
+    data.auth.developerPasswordHash = developerHash;
+    data.auth.teacherUsername = "teacher";
+    data.auth.teacherPasswordHash = teacherHash;
+    teacher.login = "teacher";
+    teacher.passwordHash = teacherHash;
+    teacher.active = true;
+    teacher.mustChangePassword = false;
+    data.auth.requestedLoginsRevision = 1;
+    return data;
+  }
+
+  // ===== Storage: UI faqat shu ikki funksiya orqali ma'lumotga murojaat qiladi. =====
+  function sessionVersionOf(record) {
+    return Number.isSafeInteger(record?.sessionVersion) && record.sessionVersion >= 0
+      ? record.sessionVersion
+      : 0;
+  }
+  function invalidateUserSessions(record) {
+    record.sessionVersion = sessionVersionOf(record) + 1;
+  }
+  function reconcileSessionVersions(data, previous) {
+    const update = (record, old, changed) => {
+      record.sessionVersion = Math.max(
+        sessionVersionOf(record),
+        sessionVersionOf(old) + (old && changed ? 1 : 0),
+      );
+    };
+    // The developer account lives in auth; the legacy teacher hash is only an alias.
+    update(data.auth, previous?.auth,
+      data.auth.developerPasswordHash !== previous?.auth?.developerPasswordHash);
+    for (const [key, inactive] of [
+      ["teachers", (record) => record.active === false],
+      ["students", (record) => Boolean(record.archived)],
+    ]) {
+      const oldUsers = new Map((previous?.[key] || []).map((record) => [record.id, record]));
+      for (const record of data[key] || []) {
+        const old = oldUsers.get(record.id);
+        update(record, old, old && (
+          record.passwordHash !== old.passwordHash ||
+          (inactive(record) && !inactive(old))
+        ));
+        oldUsers.delete(record.id);
+      }
+      // Removed users cannot be restored; invalidate their last record as well.
+      for (const removed of oldUsers.values()) invalidateUserSessions(removed);
+    }
+  }
+  const JournalDatabase = (() => {
+    let connection, mode = "localStorage";
+    function open() {
+      if (connection) return connection;
+      connection = new Promise((resolve) => {
+        if (!globalThis.indexedDB) return resolve(null);
+        let settled = false;
+        let request;
+        try { request = indexedDB.open("sinf-daftari-bazalar-v1", 1); }
+        catch { return resolve(null); }
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          for (const name of ["students", "grades", "journal"])
+            if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, { keyPath: "id" });
+          if (!db.objectStoreNames.contains("logins")) db.createObjectStore("logins", { keyPath: "key" });
+        };
+        request.onsuccess = () => {
+          if (settled) { request.result.close(); return; }
+          settled = true;
+          mode = "IndexedDB";
+          request.result.onversionchange = () => { request.result.close(); connection = null; };
+          resolve(request.result);
+        };
+        request.onerror = request.onblocked = () => { settled = true; resolve(null); };
+      });
+      return connection;
+    }
+    async function read() {
+      const db = await open();
+      if (!db) return null;
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(["journal", "students", "grades", "logins"], "readonly"),
+          snapshot = tx.objectStore("journal").get("state"),
+          students = tx.objectStore("students").getAll(),
+          grades = tx.objectStore("grades").getAll(),
+          logins = tx.objectStore("logins").getAll();
+        tx.oncomplete = () => resolve({
+          data: snapshot.result ? { ...snapshot.result.data, students: students.result, grades: grades.result, loginRegistry: logins.result } : null,
+          loginRegistry: logins.result,
+        });
+        tx.onabort = tx.onerror = () => reject(tx.error || new Error("Bazani o‘qib bo‘lmadi."));
+      });
+    }
+    async function write(data, previous) {
+      const db = await open();
+      if (!db) return false;
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(["journal", "students", "grades", "logins"], "readwrite"),
+          registry = tx.objectStore("logins"), request = registry.getAll();
+        let failure;
+        request.onsuccess = () => {
+          try {
+            // A single transaction reserves logins before any student/grade changes commit.
+            syncLoginRegistry(data, previous, request.result);
+            for (const item of data.loginRegistry) registry.put(item);
+            for (const name of ["students", "grades"]) {
+              const store = tx.objectStore(name);
+              store.clear();
+              for (const item of data[name]) store.put(item);
+            }
+            const { students, grades, loginRegistry, ...journal } = data;
+            tx.objectStore("journal").put({ id: "state", data: journal });
+          } catch (error) { failure = error; tx.abort(); }
+        };
+        tx.oncomplete = () => resolve(true);
+        tx.onabort = tx.onerror = () => reject(failure || tx.error || new Error("Ma’lumot bazaga saqlanmadi."));
+      });
+    }
+    return { read, write, get mode() { return mode; } };
+  })();
+  const Storage = (() => {
+    const KEY = "sinf-daftari-v1";
+    const REGISTRY_KEY = "sinf-daftari-login-registry-v1";
+    async function hashPassword(value) {
+      const bytes = new TextEncoder().encode(value);
+      if (!globalThis.crypto?.subtle)
+        throw new Error("SHA-256 uchun xavfsiz brauzer muhiti kerak.");
+      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      return Array.from(new Uint8Array(digest), (b) =>
+        b.toString(16).padStart(2, "0"),
+      ).join("");
+    }
+    async function loadData() {
+      const persisted = await JournalDatabase.read(), raw = localStorage.getItem(KEY);
+      let legacy;
+      try { legacy = raw ? JSON.parse(raw) : null; }
+      catch (error) { if (!persisted?.data) throw error; }
+      const stored = persisted?.data && (!legacy || (persisted.data.storageSavedAt || 0) >= (legacy.storageSavedAt || 0))
+        ? persisted.data : legacy;
+      if (stored) {
+        const data = applyRequestedLoginCredentials(migrateData(stored));
+        syncLoginRegistry(data, legacy, persisted?.loginRegistry);
+        await saveData(data);
+        return data;
+      }
+      const data = migrateData({
+        version: 1,
+        settings: {
+          weights: {
+            avgMultiplier: 10,
+            unexcusedAbsencePenalty: 3,
+            skippedLessonPenalty: 2,
+          },
+          gradeMin: 1,
+          gradeMax: 10,
+          lessonsPerDay: 7,
+          showRankingToStudents: false,
+        },
+        auth: {
+          teacherUsername: "",
+          developerUsername: "",
+        },
+        classes: defaultClasses(),
+        students: [],
+        subjects: defaultSubjectNames(),
+        attendance: [],
+        grades: [],
+        curriculum: [],
+        curriculumConfirmed: false,
+        timetable: [],
+        weeklySnapshots: [],
+        teachers: [],
+      }, true);
+      data.curriculum = seedProvisionalCurriculum(data);
+      applyRequestedLoginCredentials(data);
+      await saveData(data);
+      return data;
+    }
+    async function saveData(data, storage = localStorage) {
+      const raw = storage.getItem(KEY), previous = raw ? JSON.parse(raw) : null,
+        reserved = JSON.parse(storage.getItem(REGISTRY_KEY) || "[]");
+      syncLoginRegistry(data, previous, reserved);
+      reconcileSessionVersions(data, previous);
+      data.storageSavedAt = Date.now();
+      const committed = storage === localStorage && await JournalDatabase.write(data, previous);
+      try {
+        storage.setItem(KEY, JSON.stringify(data));
+        storage.setItem(REGISTRY_KEY, JSON.stringify(data.loginRegistry));
+      } catch (error) { if (!committed) throw error; }
+    }
+    return { loadData, saveData, hashPassword };
+  })();
+  const { loadData, saveData } = Storage;
+
+  // ===== Utilities =====
+  const root = document.getElementById("root");
+  const state = {
+    db: null,
+    user: null,
+    passwordChangeRequired: false,
+    loginRole: "student",
+    view: "overview",
+    attendanceDate: todayISO(),
+    gradeDate: todayISO(),
+    gradeSubject: "Matematika",
+    gradeClassId: "",
+    ratingWeek: mondayOf(todayISO()),
+    studentFormOpen: false,
+    editStudentId: null,
+    editGradeId: null,
+    editClassId: null,
+    classFormOpen: false,
+    classAutoTimetable: true,
+    teacherFormOpen: false,
+    editTeacherId: null,
+    teacherDraft: null,
+    teacherRowSeed: 0,
+    temporaryPassword: null,
+    classPageId: "",
+    classPageTab: "students",
+    classPageSearch: "",
+    classPageStudentId: "",
+    studentTab: "results",
+    databaseTab: "logins",
+    databaseSearch: "",
+    databasePage: 0,
+    placementPending: null,
+    placementOptions: { mustChangePassword: true, archiveMissing: false },
+    editSubject: null,
+    subjectFormOpen: false,
+    curriculumGrade: 1,
+    scheduleClassId: "",
+    scheduleEditMode: false,
+    gradeFilters: { student: "", subject: "", from: "", to: "" },
+    importReport: null,
+    gradeImportDraft: null,
+    gradeImportError: "",
+    gradeImportBusy: false,
+    gradeImportLibrary: "idle",
+    curriculumImportReport: null,
+    jsonImportPending: null,
+    jsonImportMode: "",
+    jsonImportPreview: null,
+    jsonImportReport: null,
+    toastTimer: null,
+  };
+  function todayISO() {
+    const d = new Date();
+    return [
+      d.getFullYear(),
+      String(d.getMonth() + 1).padStart(2, "0"),
+      String(d.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+  function parseISO(s) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s || "")) return null;
+    const [y, m, d] = s.split("-").map(Number);
+    const x = new Date(y, m - 1, d);
+    return x.getFullYear() === y && x.getMonth() === m - 1 && x.getDate() === d
+      ? x
+      : null;
+  }
+  function isDate(s) {
+    return !!parseISO(s);
+  }
+  function formatISO(d) {
+    return [
+      d.getFullYear(),
+      String(d.getMonth() + 1).padStart(2, "0"),
+      String(d.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+  function mondayOf(s) {
+    const d = parseISO(s) || new Date();
+    d.setHours(12, 0, 0, 0);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return formatISO(d);
+  }
+  function addDays(s, n) {
+    const d = parseISO(s) || new Date();
+    d.setDate(d.getDate() + n);
+    return formatISO(d);
+  }
+  function weekLabel(start) {
+    return `${prettyDate(start)} – ${prettyDate(addDays(start, 6))}`;
+  }
+  function prettyDate(s) {
+    const d = parseISO(s);
+    return d
+      ? new Intl.DateTimeFormat("uz-UZ", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }).format(d)
+      : s;
+  }
+  function esc(value) {
+    return String(value ?? "").replace(
+      /[&<>"']/g,
+      (c) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[c],
+    );
+  }
+  function id(prefix = "id") {
+    return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function fmt(n, d = 2) {
+    return n == null ? "—" : Number(n).toFixed(d).replace(/\.00$/, "");
+  }
+  function notify(message) {
+    const el = document.getElementById("toast");
+    el.textContent = message;
+    el.classList.add("show");
+    clearTimeout(state.toastTimer);
+    state.toastTimer = setTimeout(() => el.classList.remove("show"), 3100);
+  }
+  function initials(name) {
+    return (
+      String(name || "")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((x) => x[0] || "")
+        .join("")
+        .toLocaleUpperCase("uz") || "?"
+    );
+  }
+  function byStudent(studentId) {
+    return state.db.students.find((s) => s.id === studentId);
+  }
+  function dataRangeDates(start) {
+    return { from: start, to: addDays(start, 6) };
+  }
+  function rowMatchesWeek(date, start) {
+    return date >= start && date <= addDays(start, 6);
+  }
+  function escapeCSV(value) {
+    const s = String(value ?? "");
+    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function downloadFile(name, content, type = "text/plain;charset=utf-8") {
+    const blob = new Blob([content], { type });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  function csvParse(text) {
+    const rows = [];
+    let row = [],
+      cell = "",
+      quoted = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (quoted) {
+        if (c === '"' && text[i + 1] === '"') {
+          cell += '"';
+          i++;
+        } else if (c === '"') quoted = false;
+        else cell += c;
+      } else if (c === '"') quoted = true;
+      else if (c === ",") {
+        row.push(cell);
+        cell = "";
+      } else if (c === "\n") {
+        row.push(cell.replace(/\r$/, ""));
+        if (row.some((x) => x !== "")) rows.push(row);
+        row = [];
+        cell = "";
+      } else cell += c;
+    }
+    row.push(cell.replace(/\r$/, ""));
+    if (row.some((x) => x !== "")) rows.push(row);
+    return rows;
+  }
+
+  // ===== Auth =====
+  const CYRILLIC_TO_LATIN = {
+    а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "yo", ж: "j",
+    з: "z", и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o",
+    п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "x", ц: "ts",
+    ч: "ch", ш: "sh", щ: "shch", ъ: "", ы: "i", ь: "", э: "e", ю: "yu",
+    я: "ya", ғ: "g", қ: "q", ў: "o", ҳ: "h",
+  };
+  function transliterate(value) {
+    return String(value || "")
+      .toLocaleLowerCase("uz")
+      .replace(/[а-яёғқўҳ]/gu, (letter) => CYRILLIC_TO_LATIN[letter] ?? letter);
+  }
+  function normalizedLogin(value) {
+    return String(value || "").normalize("NFC").trim().toLocaleLowerCase("uz");
+  }
+  function loginAccounts(db) {
+    return [
+      ...(db?.auth?.developerUsername ? [{ username: db.auth.developerUsername, role: "developer", ownerId: "developer", fullName: "Dasturchi" }] : []),
+      ...(db?.teachers || []).map((item) => ({ username: item.login, role: "teacher", ownerId: item.id, fullName: item.fullName || item.label })),
+      ...(db?.students || []).map((item) => ({ username: item.username, role: "student", ownerId: item.id, fullName: item.fullName })),
+    ].filter((item) => normalizedLogin(item.username));
+  }
+  function syncLoginRegistry(data, ...sources) {
+    const registry = new Map(), now = new Date().toISOString();
+    const reserve = (item) => {
+      const key = normalizedLogin(item?.username);
+      if (!key || !["student", "teacher", "developer"].includes(item?.role) || !item?.ownerId)
+        throw new Error("Login reyestridagi yozuv noto‘g‘ri.");
+      const previous = registry.get(key);
+      if (previous && (previous.role !== item.role || previous.ownerId !== item.ownerId))
+        throw new Error(`“${item.username}” logini oldin boshqa hisobga berilgan. Boshqa login tanlang.`);
+      registry.set(key, {
+        key, username: previous?.username || String(item.username).trim(),
+        role: item.role, ownerId: item.ownerId,
+        fullName: item.fullName || previous?.fullName || "",
+        firstUsedAt: previous?.firstUsedAt || item.firstUsedAt || now,
+      });
+    };
+    for (const source of [...sources, data]) {
+      if (!source) continue;
+      for (const item of Array.isArray(source) ? source : source.loginRegistry || []) reserve(item);
+      if (!Array.isArray(source)) for (const item of loginAccounts(source)) reserve(item);
+    }
+    data.loginRegistry = [...registry.values()];
+    return data.loginRegistry;
+  }
+  function loginTaken(db, username, role = "", ownerId = "") {
+    const key = normalizedLogin(username);
+    return [...(db?.loginRegistry || []), ...loginAccounts(db)].some((item) =>
+      normalizedLogin(item.username) === key && !(item.role === role && item.ownerId === ownerId),
+    );
+  }
+  function nameLoginParts(fullName) {
+    return String(fullName || "").trim().split(/\s+/u).slice(0, 2).map((part) =>
+      transliterate(part).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/g, ""),
+    ).filter(Boolean);
+  }
+  function loginMatchesName(username, fullName) {
+    const parts = nameLoginParts(fullName);
+    if (parts.length < 2) return false;
+    const [first, last] = parts.map((part) => part.slice(0, 12)),
+      value = transliterate(username).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/g, "");
+    return new RegExp(`${first}[a-z]*${last}|${last}[a-z]*${first}`).test(value);
+  }
+  function suggestStudentLogin(fullName, db = state.db, editId = "") {
+    const parts = nameLoginParts(fullName);
+    if (parts.length < 2) return "";
+    for (let index = 1; index <= 999999; index++) {
+      const suffix = index === 1 ? "" : `.${index}`,
+        available = 31 - suffix.length,
+        candidate = `${parts[0].slice(0, Math.ceil(available / 2))}.${parts[1].slice(0, Math.floor(available / 2))}${suffix}`;
+      if (!loginTaken(db, candidate, "student", editId)) return candidate;
+    }
+    throw new Error("Bu ism-familiya uchun bo‘sh login topilmadi.");
+  }
+  function studentLoginError(db, fullName, username, existing = null) {
+    if (nameLoginParts(fullName).length < 2) return "Ism va familiyani to‘liq kiriting.";
+    if (!/^[\p{L}\p{N}._-]{2,32}$/u.test(username))
+      return "Login 2–32 belgi bo‘lsin; harf, raqam, nuqta yoki chiziqcha ishlating.";
+    const unchanged = existing && existing.fullName === fullName && normalizedLogin(existing.username) === normalizedLogin(username);
+    if (!unchanged && !loginMatchesName(username, fullName))
+      return "Login ism va familiyaga o‘xshashi shart. Avtomatik login yaratishingiz mumkin.";
+    if (loginTaken(db, username, "student", existing?.id || ""))
+      return "Bu login oldin berilgan va band qoladi. Nuqta yoki raqam bilan farqlang.";
+    return "";
+  }
+  function gradeRangeMessage(db = state.db) {
+    return `Baho ${db.settings.gradeMin}–${db.settings.gradeMax} oralig‘ida bo‘lsin.`;
+  }
+  function validGradeValue(db, value) {
+    return Number.isInteger(Number(value)) &&
+      Number(value) >= Number(db.settings.gradeMin) &&
+      Number(value) <= Number(db.settings.gradeMax);
+  }
+  function validateNewPassword(password, ...names) {
+    const value = String(password || ""),
+      simple = transliterate(value).toLocaleLowerCase("uz"),
+      folded = simple.replace(/[\s-]+/g, ""),
+      words = value.trim().split(/[ -]+/).filter(Boolean);
+    if (value.length < 8) return "Parol kamida 8 ta belgidan iborat bo‘lsin.";
+    if (!/\d/.test(value) && words.length < 3)
+      return "Parolda raqam yoki kamida uchta so‘z bo‘lsin.";
+    for (const item of names.flat().filter(Boolean)) {
+      const normalized = transliterate(item).toLocaleLowerCase("uz"),
+        nameWords = normalized.split(/[^\p{L}\p{N}]+/u).filter((x) => x.length >= 3);
+      if (
+        (normalized.length >= 3 && folded.includes(normalized.replace(/[^\p{L}\p{N}]/gu, ""))) ||
+        nameWords.some((word) => folded.includes(word))
+      )
+        return "Parolda ism yoki login bo‘lmasin.";
+    }
+    if (["12345678", "password", "parol", "qwerty123"].includes(folded))
+      return "Bu keng tarqalgan parol. Boshqasini tanlang.";
+    return "";
+  }
+  async function passwordMatches(password, expectedHash) {
+    if (!expectedHash) return false;
+    const typed = String(password || ""),
+      first = await Storage.hashPassword(typed);
+    if (first === expectedHash) return true;
+    const normalized = typed.replace(/\s+/g, "-").toLocaleLowerCase("uz");
+    if (normalized === typed) return false;
+    return (await Storage.hashPassword(normalized)) === expectedHash;
+  }
+  const SESSION_KEY = "sinf-daftari-session";
+  const SESSION_DURATION = 12 * 60 * 60 * 1000;
+  function sessionUserId(user) {
+    return user.role === "developer" ? "developer"
+      : user.role === "teacher" ? user.teacherId : user.studentId;
+  }
+  function sessionAccount(db, role, userId) {
+    if (role === "developer")
+      return userId === "developer" && db.auth?.developerUsername &&
+        db.auth.developerPasswordHash ? db.auth : null;
+    if (role === "teacher")
+      return db.teachers.find((record) => record.id === userId && record.active !== false);
+    if (role === "student")
+      return db.students.find((record) => record.id === userId && !record.archived);
+    return null;
+  }
+  function userFromAccount(role, record) {
+    if (role === "developer") return { role, fullName: "Dasturchi" };
+    if (role === "teacher") return {
+      role,
+      teacherId: record.id,
+      fullName: record.fullName || record.label || "O‘qituvchi",
+      username: record.login,
+    };
+    return { role, studentId: record.id, fullName: record.fullName, username: record.username };
+  }
+  function authContext() {
+    return {
+      state,
+      storage: localStorage,
+      now: Date.now,
+      getHash: () => window.location.hash,
+      setHash: (hash) => history.replaceState(null, "", `${window.location.pathname}${window.location.search}${hash}`),
+      render,
+    };
+  }
+  function saveSession(context = authContext()) {
+    const user = context.state.user,
+      userId = user && sessionUserId(user),
+      account = user && sessionAccount(context.state.db, user.role, userId);
+    if (!account) {
+      context.storage.removeItem(SESSION_KEY);
+      return false;
+    }
+    const issuedAt = context.now();
+    // Explicit allowlist: never serialize the user/account or any credentials.
+    context.storage.setItem(SESSION_KEY, JSON.stringify({
+      role: user.role,
+      userId,
+      sessionVersion: sessionVersionOf(account),
+      issuedAt,
+      expiresAt: issuedAt + SESSION_DURATION,
+    }));
+    return true;
+  }
+  function readSession(context) {
+    try {
+      const session = JSON.parse(context.storage.getItem(SESSION_KEY)),
+        fields = ["role", "userId", "sessionVersion", "issuedAt", "expiresAt"],
+        now = context.now();
+      if (!session || typeof session !== "object" || Array.isArray(session) ||
+          Object.keys(session).length !== fields.length ||
+          !fields.every((key) => Object.prototype.hasOwnProperty.call(session, key)) ||
+          !["student", "teacher", "developer"].includes(session.role) ||
+          typeof session.userId !== "string" || !session.userId ||
+          !Number.isSafeInteger(session.sessionVersion) || session.sessionVersion < 0 ||
+          !Number.isSafeInteger(session.issuedAt) || session.issuedAt < 0 || session.issuedAt > now ||
+          !Number.isSafeInteger(session.expiresAt) || session.expiresAt <= now ||
+          session.expiresAt - session.issuedAt !== SESSION_DURATION)
+        throw new Error("Invalid session");
+      const account = sessionAccount(context.state.db, session.role, session.userId);
+      if (!account || session.sessionVersion !== sessionVersionOf(account))
+        throw new Error("Invalid session account");
+      return {
+        user: userFromAccount(session.role, account),
+        mustChange: session.role !== "developer" && account.mustChangePassword === true,
+      };
+    } catch {
+      context.storage.removeItem(SESSION_KEY);
+      return null;
+    }
+  }
+  function applyAuthenticatedUser(user, mustChange, context) {
+    context.state.user = user;
+    context.state.passwordChangeRequired = mustChange;
+    context.state.view = user.role === "student" ? "student" : "overview";
+    context.state.loginRole = user.role;
+    const routeRole = context.getHash().match(/^#\/(student|teacher|developer)(?:\/|$)/)?.[1];
+    if (routeRole && routeRole !== user.role) context.setHash(`#/${user.role}`);
+  }
+  async function restoreSession(context = authContext()) {
+    const restored = readSession(context);
+    if (restored) applyAuthenticatedUser(restored.user, restored.mustChange, context);
+    else {
+      context.state.user = null;
+      context.state.passwordChangeRequired = false;
+      context.state.view = "overview";
+    }
+    // Use the normal rendering path, including the password-change gate.
+    await context.render();
+    return Boolean(restored);
+  }
+  async function completeLogin(user, mustChange = false, context = authContext()) {
+    applyAuthenticatedUser(user, mustChange, context);
+    saveSession(context);
+    await context.render();
+  }
+  async function login(username, password, context = authContext()) {
+    const db = context.state.db;
+    const name = normalizedLogin(username);
+    if (
+      name === normalizedLogin(db.auth.developerUsername) &&
+      await passwordMatches(password, db.auth.developerPasswordHash)
+    ) {
+      await completeLogin(userFromAccount("developer", db.auth), false, context);
+      return true;
+    }
+    const teacher = db.teachers.find(
+      (item) => item.active !== false && normalizedLogin(item.login) === name,
+    );
+    if (teacher && await passwordMatches(password, teacher.passwordHash)) {
+      await completeLogin(userFromAccount("teacher", teacher), teacher.mustChangePassword === true, context);
+      return true;
+    }
+    const student = db.students.find(
+      (s) =>
+        !s.archived && normalizedLogin(s.username) === name,
+    );
+    if (student && await passwordMatches(password, student.passwordHash)) {
+      await completeLogin(userFromAccount("student", student), student.mustChangePassword === true, context);
+      return true;
+    }
+    return false;
+  }
+  function logout(context = authContext()) {
+    const role = context.state.user?.role || context.state.loginRole || "student";
+    context.storage.removeItem(SESSION_KEY);
+    context.state.user = null;
+    context.state.passwordChangeRequired = false;
+    if (context.state === state) {
+      gradeImportReadVersion++;
+      state.gradeImportDraft = null;
+      state.gradeImportError = "";
+      state.gradeImportBusy = false;
+    }
+    context.state.loginRole = role;
+    context.setHash(`#/${role}/login`);
+    context.state.view = "overview";
+    return context.render();
+  }
+
+  function loginRoleFromHash(hash, fallback = "student") {
+    return String(hash).match(/^#\/(student|teacher|developer)(?:\/|$)/)?.[1] || fallback;
+  }
+  // ===== Rating calculation =====
+  function calculateRatings(db, start) {
+    const { from, to } = dataRangeDates(start),
+      w = db.settings.weights;
+    const rows = db.students.filter((student) => !student.archived).map((student) => {
+      const grades = db.grades
+        .filter(
+          (g) => g.studentId === student.id && g.date >= from && g.date <= to,
+        )
+        .map((g) => Number(g.value));
+      const avg = grades.length
+        ? grades.reduce((a, b) => a + b, 0) / grades.length
+        : null;
+      const days = db.attendance.filter(
+        (a) => a.studentId === student.id && a.date >= from && a.date <= to,
+      );
+      const unexcusedDays = days.filter((a) => a.status === "unexcused").length;
+      const skipped = days.reduce(
+        (n, a) => n + (Number(a.skippedLessons) || 0),
+        0,
+      );
+      // Tekshiruv misoli: 4.5*20 - 1*3 - 2*2 = 83 ball.
+      const score =
+        Math.round(
+          ((avg ?? 0) * w.avgMultiplier -
+            unexcusedDays * w.unexcusedAbsencePenalty -
+            skipped * w.skippedLessonPenalty +
+            Number.EPSILON) *
+            100,
+        ) / 100;
+      return {
+        studentId: student.id,
+        classId: student.classId ?? null,
+        fullName: student.fullName,
+        avg,
+        unexcusedDays,
+        skipped,
+        score,
+      };
+    });
+    rows.sort(
+      (a, b) =>
+        b.score - a.score ||
+        (b.avg ?? -Infinity) - (a.avg ?? -Infinity) ||
+        a.fullName.localeCompare(b.fullName, "uz"),
+    );
+    return rows.map((r, i) => ({ ...r, rank: i + 1 }));
+  }
+  function calculateClassRatings(db, start, studentRatings = calculateRatings(db, start)) {
+    const result = db.classes.map((klass) => {
+        const rows = studentRatings.filter((rating) => rating.classId === klass.id),
+          averageScore = rows.length
+            ? rows.reduce((sum, rating) => sum + Number(rating.score), 0) / rows.length
+            : null;
+        return { classId: klass.id, className: klass.name, studentCount: rows.length, averageScore };
+      });
+    result.sort((a, b) =>
+      (b.averageScore ?? -Infinity) - (a.averageScore ?? -Infinity) ||
+      a.className.localeCompare(b.className, "uz"),
+    );
+    return result.map((row, index) => ({ ...row, rank: index + 1 }));
+  }
+  function classStudentRatingsForWeek(start, classId) {
+    const ids = new Set(state.db.students
+      .filter((student) => !student.archived && student.classId === classId)
+      .map((student) => student.id));
+    return (ratingsForWeek(start) || [])
+      .filter((rating) => ids.has(rating.studentId))
+      .sort((a, b) => b.score - a.score || (b.avg ?? -Infinity) - (a.avg ?? -Infinity) || a.fullName.localeCompare(b.fullName, "uz"))
+      .map((rating, index) => ({ ...rating, rank: index + 1 }));
+  }
+  function savedStudentRatings(snapshot) {
+    if (Array.isArray(snapshot?.schoolRanking)) return snapshot.schoolRanking;
+    return Array.isArray(snapshot?.ratings) ? snapshot.ratings : [];
+  }
+  function classRatingsForData(db, start) {
+    const snapshot = db.weeklySnapshots.find((item) => item.weekStart === start);
+    if (!snapshot) return calculateClassRatings(db, start);
+    if (Array.isArray(snapshot.classRankings)) return snapshot.classRankings;
+    const ratings = savedStudentRatings(snapshot);
+    return ratings.every((row) => Object.prototype.hasOwnProperty.call(row, "classId"))
+      ? calculateClassRatings(db, start, ratings)
+      : null;
+  }
+  function ratingsForWeek(start) {
+    const snapshot = state.db.weeklySnapshots.find(
+      (s) => s.weekStart === start,
+    );
+    return snapshot ? savedStudentRatings(snapshot) : calculateRatings(state.db, start);
+  }
+  function rankForStudent(start, studentId) {
+    return (ratingsForWeek(start) || []).find((r) => r.studentId === studentId) || null;
+  }
+
+  // ===== Shared UI =====
+  function shell(
+    content,
+    title,
+    subtitle = "Sinfingizdagi o‘quv va davomat jarayoni",
+  ) {
+    const teacher = state.user.role === "teacher";
+    const developer = state.user.role === "developer",
+      student = state.user.role === "student";
+    const classTeacher = state.db.classes.some((klass) => klass.teacherId === state.user.teacherId);
+    const nav = developer
+      ? [
+          ["overview", "⌂", "Umumiy ko‘rinish"],
+          ["classes", "▦", "Sinflar"],
+          ["teachers", "♙", "O‘qituvchilar"],
+          ["students", "♧", "O‘quvchilar"],
+          ["placement", "⇧", "O‘quvchilarni joylash"],
+          ["grade-import", "⇧", "Baholarni import qilish"],
+          ["rating", "↗", "Reyting"],
+          ["subjects", "▤", "Fanlar"],
+          ["curriculum", "▥", "O‘quv reja"],
+          ["schedule", "◷", "Dars jadvali"],
+          ["data", "⇧", "Ma’lumotlar"],
+          ["databases", "▣", "Bazalar"],
+        ]
+      : teacher
+        ? [
+            ["overview", "⌂", "Umumiy ko‘rinish"],
+            ["classes", "▦", "Sinflar"],
+            ["students", "♧", "O‘quvchilar"],
+            ...(classTeacher ? [["attendance", "◷", "Davomat"]] : []),
+            ["grades", "▤", "Baholar"],
+            ["grade-import", "⇧", "Baholarni import qilish"],
+            ["rating", "↗", "Haftalik reyting"],
+            ["schedule", "◷", "Dars jadvali"],
+            ["curriculum", "▥", "O‘quv reja"],
+            ["settings", "⚙", "Sozlamalar"],
+          ]
+        : [
+            ["student", "⌂", "Natijalarim"],
+            ["schedule", "◷", "Dars jadvali"],
+            ["curriculum", "▥", "O‘quv reja"],
+          ];
+    return `<div class="shell"><aside class="rail"><div class="brand"><div class="brand-mark">S</div><div><strong>Sinf daftari</strong><small>Haftalik o‘sish jurnali</small></div></div><nav class="rail-nav" aria-label="Asosiy menyu"><div class="nav-label">${developer ? "Dasturchi oynasi" : teacher ? "Boshqaruv" : "Mening sinfim"}</div>${nav.map(([key, icon, label]) => `<button class="nav-btn ${state.view === key ? "active" : ""}" data-action="navigate" data-view="${key}"><span class="nav-icon">${icon}</span>${label}</button>`).join("")}</nav>${student ? `<div class="rail-note"><b>O‘quvchi sahifasi</b>Bu yerda faqat o‘zingizning baho va davomat ma’lumotlaringiz ko‘rinadi.</div>` : ""}<div class="rail-note"><b>Hafta dushanbadan boshlanadi</b>Reyting baholar, sababsiz kelmagan kunlar va kirmagan darslar asosida hisoblanadi.</div><div class="rail-foot">Sinf daftari · mahalliy prototip</div></aside><section class="workspace"><header class="topbar"><div><h1>${esc(title)}</h1><p>${esc(subtitle)}</p></div><div class="top-actions"><div class="user-chip"><div class="avatar">${esc(initials(state.user.fullName))}</div><div><strong>${esc(state.user.fullName)}</strong><small>${developer ? "Dasturchi" : teacher ? "O‘qituvchi" : "O‘quvchi"}</small></div></div><button class="btn btn-light btn-sm" data-action="logout">Chiqish</button></div></header><main class="main">${content}<div class="footer-note">Sinf daftari · Ma’lumotlar ushbu brauzerda saqlanadi</div></main></section></div>`;
+  }
+  function pageHead(title, sub, actions = "") {
+    return `<div class="page-head"><div><h2>${title}</h2><p>${sub}</p></div>${actions ? `<div class="page-actions">${actions}</div>` : ""}</div>`;
+  }
+  function studentName(s) {
+    return `<span class="name-cell"><span class="mini-avatar">${esc(initials(s.fullName))}</span><span>${esc(s.fullName)}</span></span>`;
+  }
+  function emptyBlock(title, description, button = "") {
+    return `<div class="empty"><div class="empty-mark">✎</div><strong>${title}</strong><div class="small">${description}</div>${button ? `<div style="margin-top:13px">${button}</div>` : ""}</div>`;
+  }
+  function rankingTable(ratings, start, withNames = true, compact = false) {
+    if (!ratings.length)
+      return emptyBlock(
+        "Hali o‘quvchilar yo‘q",
+        "Reytingni ko‘rish uchun avval o‘quvchilarni kiriting.",
+        `<button class="btn btn-sm" data-action="navigate" data-view="students">O‘quvchi qo‘shish</button>`,
+      );
+    const previous = ratingsForWeek(addDays(start, -7));
+    return `<div class="table-wrap"><table class="table"><thead><tr><th>O‘rin</th>${withNames ? "<th>O‘quvchi</th>" : ""}<th>O‘rtacha baho</th><th>Sababsiz kun</th><th>Kirmagan dars</th><th>Ball</th>${compact ? "" : "<th>O‘tgan haftaga</th>"}</tr></thead><tbody>${ratings
+      .map((r) => {
+        const before = previous.find((x) => x.studentId === r.studentId);
+        const movement = before ? before.rank - r.rank : null;
+        return `<tr><td><span class="rank-badge rank-${r.rank <= 3 ? r.rank : "x"}">${r.rank}</span></td>${withNames ? `<td>${studentName(r)}</td>` : ""}<td>${fmt(r.avg)}</td><td>${r.unexcusedDays}</td><td>${r.skipped}</td><td class="score">${fmt(r.score)}</td>${compact ? "" : `<td>${movement == null ? '<span class="muted">—</span>' : movement > 0 ? `<span class="change-up">↑ ${movement} o‘rin</span>` : movement < 0 ? `<span class="change-down">↓ ${Math.abs(movement)} o‘rin</span>` : '<span class="change-same">= O‘zgarmadi</span>'}</td>`}</tr>`;
+      })
+      .join("")}</tbody></table></div>`;
+  }
+  function dateInput(idName, value) {
+    return `<input id="${idName}" type="date" value="${esc(value)}" required>`;
+  }
+
+  // ===== Teacher views =====
+  function overviewView() {
+    const start = mondayOf(todayISO()),
+      students = visibleStudentsForUser(),
+      studentIds = new Set(students.map((student) => student.id)),
+      ratings = ratingsForWeek(start).filter((rating) => studentIds.has(rating.studentId));
+    const attendance = state.db.attendance.filter((a) =>
+      studentIds.has(a.studentId) && rowMatchesWeek(a.date, start),
+    );
+    const present = attendance.filter((a) => a.status === "present").length;
+    const attendanceRate = attendance.length
+      ? Math.round((present / attendance.length) * 100)
+      : 0;
+    const grades = state.db.grades.filter((g) => studentIds.has(g.studentId) && rowMatchesWeek(g.date, start));
+    const avg = grades.length
+      ? grades.reduce((n, g) => n + Number(g.value), 0) / grades.length
+      : null;
+    const top = ratings[0];
+    return `${pageHead("Assalomu alaykum, ustoz", "Sizga biriktirilgan sinflarning shu haftadagi jarayoni.", `<button class="btn btn-teal" data-action="navigate" data-view="attendance">＋ Davomat kiritish</button><button class="btn btn-light" data-action="navigate" data-view="grades">＋ Baho kiritish</button>`)}<div class="grid grid-4"><div class="card stat" style="--tone:#e7eff6;--tone-ink:#294c73"><div class="stat-label">O‘quvchilar</div><div class="stat-value">${students.length}</div><div class="stat-note">ko‘rinadigan sinflar</div><div class="stat-icon">♧</div></div><div class="card stat" style="--tone:#dff2ef;--tone-ink:#087e83"><div class="stat-label">Haftalik davomat</div><div class="stat-value">${attendanceRate}<span style="font-size:16px">%</span></div><div class="stat-note">kiritilgan kunlar bo‘yicha</div><div class="stat-icon">◷</div></div><div class="card stat" style="--tone:#fff1d0;--tone-ink:#9d7414"><div class="stat-label">O‘rtacha baho</div><div class="stat-value">${fmt(avg)}</div><div class="stat-note">${grades.length} ta ko‘rinadigan baho</div><div class="stat-icon">▤</div></div><div class="card stat" style="--tone:#fce9e4;--tone-ink:#bd584b"><div class="stat-label">Hafta yetakchisi</div><div class="stat-value" style="font-size:${top ? 18 : 26}px">${top ? esc(top.fullName.split(" ").slice(0, 2).join(" ")) : "—"}</div><div class="stat-note">${top ? `${fmt(top.score)} ball` : "Baho kiritilgach ko‘rinadi"}</div><div class="stat-icon">★</div></div></div><div class="split" style="margin-top:16px"><section class="card"><div class="card-head"><div><h3 class="section-title">Haftalik reyting</h3><p class="section-sub">${weekLabel(start)}</p></div><button class="btn btn-light btn-sm" data-action="navigate" data-view="rating">Batafsil ko‘rish</button></div>${rankingTable(ratings.slice(0, 5), start, true, true)}</section><section class="card"><div class="card-head"><div><h3 class="section-title">Tezkor amallar</h3><p class="section-sub">Kundalik ishlarni tez bajaring</p></div></div><div class="card-body quick-list"><a href="#" class="quick-link" data-action="navigate" data-view="attendance"><span><b>Davomatni belgilang</b><small>Keldi, sababli yoki sababsiz</small></span><span class="quick-icon">◷</span></a><a href="#" class="quick-link" data-action="navigate" data-view="grades"><span><b>Baholarni kiriting</b><small>Sinf bo‘yicha tezkor jadval</small></span><span class="quick-icon">▤</span></a><a href="#" class="quick-link" data-action="navigate" data-view="students"><span><b>O‘quvchi qo‘shing</b><small>Login va parolni belgilang</small></span><span class="quick-icon">＋</span></a><div class="note-box">Ball formulasi: o‘rtacha baho × ${state.db.settings.weights.avgMultiplier}, sababsiz kun va darsga kirmagan soatlar uchun jarima ayriladi.</div></div></section></div>`;
+  }
+  function classOptions(selected, permittedClasses = state.db.classes) {
+    return permittedClasses
+      .map(
+        (c) =>
+          `<option value="${esc(c.id)}" ${selected === c.id ? "selected" : ""}>${esc(c.name)}</option>`,
+      )
+      .join("");
+  }
+  function classById(classId) {
+    return state.db.classes.find((c) => c.id === classId);
+  }
+  const TEMP_PASSWORD_WORDS = [
+    "anor", "bulut", "daryo", "daraxt", "bahor", "yulduz", "quyosh", "shamol",
+    "dengiz", "tog‘", "maktab", "qalam", "daftar", "kitob", "rang", "gulzor",
+    "oyna", "chiroq", "bog‘", "sabo", "zamin", "osmon", "soyabon", "qanot",
+    "marvarid", "shabada", "ko‘prik", "kamalak", "novda", "tong", "sahro", "buloq",
+    "qaldirg‘och", "qush", "mehmon", "safar", "xazina", "chaman", "to‘lqin", "zumrad",
+    "shodlik", "baraka", "meva", "dilbar", "sokin", "ziyo", "parvoz", "olam",
+    "kamol", "navro‘z", "doston", "maysazor", "qoya", "qirg‘oq", "chashma", "bahavo",
+  ];
+  function defaultTeacherDraft(teacher = null) {
+    const groups = new Map();
+    for (const assignment of teacher?.assignments || []) {
+      if (!groups.has(assignment.subjectId)) groups.set(assignment.subjectId, []);
+      groups.get(assignment.subjectId).push(assignment.classId);
+    }
+    const assignments = [...groups].map(([subjectId, classIds]) => ({
+      key: `teacher-row-${++state.teacherRowSeed}`,
+      subjectId,
+      classIds,
+    }));
+    if (!assignments.length)
+      assignments.push({ key: `teacher-row-${++state.teacherRowSeed}`, subjectId: "", classIds: [] });
+    return {
+      label: teacher?.label || "",
+      login: teacher?.login || "",
+      fullName: teacher?.fullName || "",
+      classTeacherId:
+        state.db.classes.find((klass) => klass.teacherId === teacher?.id)?.id || "",
+      assignments,
+    };
+  }
+  function captureTeacherDraft() {
+    const form = root.querySelector('[data-form="teacher"]');
+    if (!form) return;
+    const fd = new FormData(form);
+    state.teacherDraft = {
+      label: String(fd.get("label") || ""),
+      login: String(fd.get("login") || ""),
+      fullName: String(fd.get("fullName") || ""),
+      classTeacherId: String(fd.get("classTeacherId") || ""),
+      assignments: [...form.querySelectorAll("[data-assignment-row]")].map((row) => {
+        const key = row.dataset.assignmentRow;
+        return {
+          key,
+          subjectId: String(fd.get(`subject-${key}`) || ""),
+          classIds: fd.getAll(`class-${key}`).map(String),
+        };
+      }),
+    };
+  }
+  function eligibleClassesForSubject(subjectId, data = state.db) {
+    return data.classes.filter((klass) =>
+      data.curriculum.some(
+        (row) => Number(row.grade) === Number(klass.grade) && row.subjectId === subjectId,
+      ),
+    );
+  }
+  function generateTemporaryPassword(label, login) {
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const picks = [];
+      while (picks.length < 3) {
+        const bytes = crypto.getRandomValues(new Uint32Array(1));
+        const word = TEMP_PASSWORD_WORDS[bytes[0] % TEMP_PASSWORD_WORDS.length];
+        if (!picks.includes(word)) picks.push(word);
+      }
+      const value = picks.join("-");
+      if (!validateNewPassword(value, label, login)) return value;
+    }
+    throw new Error("Vaqtinchalik parol yaratilmadi.");
+  }
+  function teacherById(teacherId, data = state.db) {
+    return data.teachers.find((teacher) => teacher.id === teacherId);
+  }
+  function teacherCanSeeClass(teacherId, classId, data = state.db) {
+    const teacher = teacherById(teacherId, data),
+      klass = data.classes.find((item) => item.id === classId);
+    return !!teacher && !!klass && (
+      klass.teacherId === teacherId ||
+      (teacher.assignments || []).some((assignment) => assignment.classId === classId)
+    );
+  }
+  function teacherClassIds(teacherId, data = state.db) {
+    return data.classes
+      .filter((klass) => teacherCanSeeClass(teacherId, klass.id, data))
+      .map((klass) => klass.id);
+  }
+  function teacherCanEditAttendance(teacherId, classId, data = state.db) {
+    return data.classes.some((klass) => klass.id === classId && klass.teacherId === teacherId);
+  }
+  function teacherCanManageStudents(teacherId, classId, data = state.db) {
+    return data.classes.some((klass) => klass.id === classId && klass.teacherId === teacherId);
+  }
+  function teacherCanEditGrade(teacherId, classId, subject, data = state.db) {
+    const subjectId = subjectIdForName(subject),
+      teacher = teacherById(teacherId, data);
+    return !!teacher && (teacher.assignments || []).some(
+      (assignment) => assignment.classId === classId && assignment.subjectId === subjectId,
+    );
+  }
+  function visibleStudentsForUser(user = state.user, data = state.db) {
+    if (user?.role === "developer") return data.students.filter((student) => !student.archived);
+    if (user?.role === "student") return data.students.filter((student) => student.id === user.studentId);
+    if (user?.role === "teacher") {
+      const visible = new Set(teacherClassIds(user.teacherId, data));
+      return data.students.filter((student) => !student.archived && visible.has(student.classId));
+    }
+    return [];
+  }
+  function normalizeSectionInput(value, grade) {
+    let section = String(value || "").trim();
+    const named = section.match(/^(\d{1,2})\s*[-–]\s*(.+)$/u);
+    if (named) {
+      if (Number(named[1]) !== Number(grade)) return null;
+      section = named[2].trim();
+    }
+    return section;
+  }
+  function classNameExists(data, grade, section, excludeId = "") {
+    const normalizedSection =
+        normalizeSectionInput(section, grade) || String(section || "").trim(),
+      normalized = normalizedSection.toLocaleLowerCase("uz"),
+      fullName = `${grade}-${normalizedSection}`.toLocaleLowerCase("uz");
+    return data.classes.some(
+      (item) =>
+        item.id !== excludeId &&
+        Number(item.grade) === Number(grade) &&
+        (String(item.section || "")
+          .trim()
+          .toLocaleLowerCase("uz") === normalized ||
+          String(item.name || "")
+            .trim()
+            .toLocaleLowerCase("uz") === fullName),
+    );
+  }
+  function classDeletionBlock(data, classId) {
+    return {
+      students: data.students.filter((student) => student.classId === classId)
+        .length,
+      lessons: data.timetable.filter((row) => row.classId === classId).length,
+    };
+  }
+  function confirmRandomTimetableOverwrite(rows, ask = confirm) {
+    if (!rows.length) return true;
+    return ask(`${rows.length} ta mavjud dars almashtiriladi. Davom etasizmi?`);
+  }
+  function generatedRowsForClass(klass, rng = Math.random) {
+    const result = generateTimetable(
+      klass.grade,
+      state.db.settings.lessonsPerDay,
+      curriculumForGrade(klass.grade),
+      rng,
+    );
+    if (result.error) return result;
+    return {
+      ...result,
+      rows: result.rows.map((row) => ({
+        ...row,
+        id: id("lesson"),
+        classId: klass.id,
+      })),
+    };
+  }
+  function studentClass(studentId) {
+    const student = byStudent(studentId);
+    return student ? classById(student.classId) : null;
+  }
+  function curriculumForGrade(grade) {
+    return state.db.curriculum.filter(
+      (row) => Number(row.grade) === Number(grade),
+    );
+  }
+  function subjectNameById(subjectId) {
+    return (
+      state.db.subjects.find((name) => subjectIdForName(name) === subjectId) ||
+      ""
+    );
+  }
+  function subjectUsageIn(data, name) {
+    const subjectId = subjectIdForName(name);
+    return {
+      grades: data.grades.filter((g) => g.subject === name).length,
+      schedule: data.timetable.filter((row) => row.subjectId === subjectId)
+        .length,
+      curriculum: data.curriculum.filter((row) => row.subjectId === subjectId)
+        .length,
+    };
+  }
+  function subjectUsage(name) {
+    return subjectUsageIn(state.db, name);
+  }
+  function usageCount(usage) {
+    return usage.grades + usage.schedule + usage.curriculum;
+  }
+  function canDeleteSubject(data, name) {
+    return usageCount(subjectUsageIn(data, name)) === 0;
+  }
+  function developerOverviewView() {
+    return `${pageHead("Dasturchi oynasi", "Sinflar, fanlar, o‘quv reja va dars jadvalini boshqaring.")}<div class="grid"><div class="grid grid-4"><div class="card stat"><div class="stat-label">Sinflar</div><div class="stat-value">${state.db.classes.length}</div><div class="stat-note">1–11-sinflar va parallel guruhlar</div><div class="stat-icon">▦</div></div><div class="card stat"><div class="stat-label">Fanlar</div><div class="stat-value">${state.db.subjects.length}</div><div class="stat-note">tahrirlash va jadvalga biriktirish</div><div class="stat-icon">▤</div></div><div class="card stat"><div class="stat-label">O‘quv reja</div><div class="stat-value">${state.db.curriculum.length}</div><div class="stat-note">fan-sinf birikmalari</div><div class="stat-icon">▥</div></div><div class="card stat"><div class="stat-label">Dars jadvali</div><div class="stat-value">${state.db.timetable.length}</div><div class="stat-note">saqlangan darslar</div><div class="stat-icon">◷</div></div></div><section class="card"><div class="card-head"><div><h3 class="section-title">Boshlash</h3><p class="section-sub">Taxminiy o‘quv rejani rasmiy tayanch reja bilan almashtiring.</p></div></div><div class="card-body quick-list"><div class="banner banner-warn"><span>!</span><div><strong>${state.db.curriculumConfirmed ? "O‘quv reja saqlandi" : "Taxminiy ma’lumot"}</strong>${state.db.curriculumConfirmed ? "Jadval dasturchi tomonidan saqlangan." : "Boshlang‘ich soatlar rasmiy reja bilan tasdiqlanmagan."}</div></div><button class="btn btn-light" data-action="navigate" data-view="curriculum">O‘quv rejani ochish</button></div></section></div>`;
+  }
+  function databasesView() {
+    const tab = ["logins", "students", "grades"].includes(state.databaseTab) ? state.databaseTab : "logins",
+      registry = state.db.loginRegistry || [],
+      roleName = { student: "O‘quvchi", teacher: "O‘qituvchi", developer: "Dasturchi" },
+      accounts = loginAccounts(state.db),
+      own = (entry) => accounts.find((account) => account.role === entry.role && account.ownerId === entry.ownerId && normalizedLogin(account.username) === entry.key);
+    const definitions = {
+      logins: { label: "Loginlar", columns: ["Login", "Ism-familiya", "Hisob turi", "Holati", "Berilgan sana"], rows: registry.map((entry) => [
+        entry.username, own(entry)?.fullName || entry.fullName || "—", roleName[entry.role],
+        own(entry) ? "Biriktirilgan" : "Band — qayta berilmaydi",
+        isDate(String(entry.firstUsedAt || "").slice(0, 10)) ? prettyDate(entry.firstUsedAt.slice(0, 10)) : "—",
+      ]) },
+      students: { label: "O‘quvchilar", columns: ["Ism-familiya", "Login", "Sinf", "Holati"], rows: state.db.students.map((item) => [
+        item.fullName, item.username, classById(item.classId)?.name || "—", item.archived ? "Arxivda" : "Faol",
+      ]) },
+      grades: { label: "Baholar", columns: ["O‘quvchi", "Login", "Fan", "Baho", "Sana"], rows: [...state.db.grades].sort((a, b) => b.date.localeCompare(a.date)).map((item) => [
+        byStudent(item.studentId)?.fullName || "—", byStudent(item.studentId)?.username || "—", item.subject, item.value, prettyDate(item.date),
+      ]) },
+    }, current = definitions[tab],
+      query = transliterate(state.databaseSearch).trim(),
+      rows = current.rows.filter((row) => !query || transliterate(row.join(" ")).includes(query)),
+      pageCount = Math.max(1, Math.ceil(rows.length / 50)),
+      page = Math.min(Math.max(0, state.databasePage), pageCount - 1),
+      shown = rows.slice(page * 50, (page + 1) * 50);
+    return `${pageHead("Bazalar", "Loginlar, o‘quvchilar va baholar shu brauzerda alohida saqlanadi.")}
+      <div class="database-summary">${Object.entries(definitions).map(([key, item]) => `<button class="card database-count ${tab === key ? "selected" : ""}" data-action="database-tab" data-tab="${key}" aria-pressed="${tab === key}"><span>${item.label}</span><strong>${item.rows.length}</strong></button>`).join("")}</div>
+      <div class="banner banner-info"><span aria-hidden="true">▣</span><div><strong>Berilgan login band qoladi</strong>O‘quvchi o‘chirilsa yoki logini almashtirilsa ham eski login qayta berilmaydi. Nuqta yoki raqam bilan farqlangan nom alohida login bo‘ladi.</div></div>
+      <section class="card database-records"><div class="card-head"><div><h3 class="section-title">${current.label} bazasi</h3><p class="section-sub">${rows.length} ta yozuv</p></div><form class="database-search" data-form="database-search"><label class="hidden" for="database-search">Bazadan qidirish</label><input class="table-input" id="database-search" name="query" value="${esc(state.databaseSearch)}" placeholder="Ism, login yoki fan"><button class="btn btn-light btn-sm">Qidirish</button></form></div>
+      ${shown.length ? `<div class="table-wrap"><table class="table"><thead><tr>${current.columns.map((label) => `<th>${label}</th>`).join("")}</tr></thead><tbody>${shown.map((row) => `<tr>${row.map((value) => `<td>${esc(value)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : emptyBlock("Yozuv topilmadi", query ? "Boshqa so‘z bilan qidiring." : "Ma’lumot qo‘shilganda shu yerda ko‘rinadi.")}
+      ${pageCount > 1 ? `<div class="database-pages"><button class="btn btn-light btn-sm" data-action="database-page" data-page="${page - 1}" ${page === 0 ? "disabled" : ""}>Oldingi</button><span>${page + 1} / ${pageCount}</span><button class="btn btn-light btn-sm" data-action="database-page" data-page="${page + 1}" ${page + 1 >= pageCount ? "disabled" : ""}>Keyingi</button></div>` : ""}</section>`;
+  }
+  function classForm() {
+    const current = state.editClassId ? classById(state.editClassId) : null;
+    if (!state.classFormOpen && !current) return "";
+    return `<section class="card"><div class="card-head"><div><h3 class="section-title">${current ? "Sinfni tahrirlash" : "Yangi sinf qo‘shish"}</h3><p class="section-sub">Sinf darajasi va harfini yoki nomini kiriting.</p></div><button class="btn btn-light btn-sm" data-action="cancel-class-form">Yopish</button></div><div class="card-body"><form data-form="class"><input type="hidden" name="id" value="${esc(current?.id || "")}"><div class="form-grid"><div class="field"><label>Daraja</label><select name="grade">${GRADES.map((g) => `<option value="${g}" ${Number(current?.grade || 5) === g ? "selected" : ""}>${g}</option>`).join("")}</select></div><div class="field"><label>Harf yoki nom</label><input name="section" maxlength="10" value="${esc(current?.section || "")}" placeholder="B" required></div></div>${current ? "" : `<p><label><input type="checkbox" name="autoTimetable" ${state.classAutoTimetable ? "checked" : ""}> Dars jadvalini avtomatik tuzish</label></p>`}<div class="form-actions"><button class="btn">${current ? "O‘zgarishlarni saqlash" : "Sinf qo‘shish"}</button></div></form></div></section>`;
+  }
+  function classesView() {
+    return classesCardsView(true, state.db.classes);
+  }
+  function classesCardsView(developer, classes) {
+    const groups = GRADES.map((grade) => {
+      const group = classes.filter((klass) => Number(klass.grade) === grade)
+        .sort((a, b) => String(a.section).localeCompare(String(b.section), "uz"));
+      if (!group.length) return "";
+      return `<section class="card"><div class="card-head"><div><h3 class="section-title">${grade}-sinf</h3><p class="section-sub">${group.length} ta sinf</p></div></div><div class="class-card-grid">${group.map((klass) => {
+        const students = state.db.students.filter((student) => !student.archived && student.classId === klass.id).length,
+          lessons = state.db.timetable.filter((row) => row.classId === klass.id).length;
+        return `<article class="class-card"><button class="class-card-open" data-action="open-class" data-id="${esc(klass.id)}"><b>${esc(klass.name)}</b><span>${students} nafar o‘quvchi</span><span>${lessons} ta dars</span></button>${developer ? `<div class="class-card-actions"><button class="btn btn-light btn-sm" data-action="edit-class" data-id="${esc(klass.id)}">Tahrirlash</button><button class="btn btn-warn btn-sm" data-action="delete-class" data-id="${esc(klass.id)}">O‘chirish</button></div>` : ""}</article>`;
+      }).join("")}</div></section>`;
+    }).join("");
+    const withoutClass = developer
+      ? state.db.students.filter((student) => !student.archived && !student.classId)
+      : [];
+    return `${pageHead("Sinflar", developer ? "1–11-darajalar va sinf guruhlarini boshqaring." : "Sizga biriktirilgan sinflar va ularning tarkibi.", developer ? `<div class="page-actions"><button class="btn btn-light" data-action="add-standard-sections">Har bir darajaga A, B, D, E qo‘shish</button><button class="btn" data-action="add-class">＋ Sinf qo‘shish</button></div>` : "")}${developer ? classForm() : ""}${groups || emptyBlock("Sinflar yo‘q", "Developer sizga sinf yoki fan biriktirgach, shu yerda ko‘rinadi.")}${withoutClass.length ? `<section class="card"><div class="card-head"><h3 class="section-title">Sinfsiz</h3><p class="section-sub">${withoutClass.length} nafar o‘quvchi</p></div><div class="card-body">${withoutClass.map((student) => `<div class="student-unstyled"><span>${studentName(student)}</span><button class="btn btn-light btn-sm" data-action="class-student-detail" data-id="${esc(student.id)}">Batafsil</button></div>`).join("")}</div></section>` : ""}`;
+  }
+  function teacherClassesView() {
+    const classes = state.db.classes.filter((klass) =>
+      teacherCanSeeClass(state.user.teacherId, klass.id),
+    );
+    return classesCardsView(false, classes);
+  }
+  function teacherAssignmentRow(row, teacher) {
+    const subjectIds = [...new Set(state.db.curriculum.map((item) => item.subjectId))],
+      eligible = row.subjectId ? eligibleClassesForSubject(row.subjectId) : [],
+      grouped = GRADES.map((grade) => {
+        const classes = eligible.filter((klass) => Number(klass.grade) === grade);
+        if (!classes.length) return "";
+        return `<div class="assignment-grade"><b>${grade}-sinf</b>${classes.map((klass) => `<label><input type="checkbox" name="class-${esc(row.key)}" value="${esc(klass.id)}" ${row.classIds.includes(klass.id) ? "checked" : ""}> ${esc(klass.name)}</label>`).join("")}</div>`;
+      }).join("");
+    return `<div class="assignment-row" data-assignment-row="${esc(row.key)}"><div class="form-grid"><div class="field"><label for="subject-${esc(row.key)}">Fan</label><select id="subject-${esc(row.key)}" name="subject-${esc(row.key)}"><option value="">Fan tanlang</option>${subjectIds.map((subjectId) => `<option value="${esc(subjectId)}" ${row.subjectId === subjectId ? "selected" : ""}>${esc(subjectNameById(subjectId))}</option>`).join("")}</select></div><div class="field"><label>Sinflar</label><div class="assignment-classes">${grouped || '<span class="small muted">Fan tanlang; faqat o‘quv rejasiga mos sinflar ko‘rsatiladi.</span>'}</div></div></div><button class="btn btn-light btn-sm" type="button" data-action="remove-teacher-row" data-row="${esc(row.key)}">Qatorni o‘chirish</button></div>`;
+  }
+  function suggestTeacherLogin(label) {
+    const base = transliterate(label)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, ".")
+      .replace(/^\.|\.$/g, "")
+      .slice(0, 32);
+    if (!base) return "";
+    for (let index = 1; index <= 999999; index++) {
+      const suffix = index === 1 ? "" : `.${index}`,
+        candidate = base.slice(0, 32 - suffix.length) + suffix;
+      if (!loginTaken(state.db, candidate, "teacher", state.editTeacherId || "")) return candidate;
+    }
+    return "";
+  }
+  function teacherForm() {
+    const existing = state.db.teachers.find((teacher) => teacher.id === state.editTeacherId);
+    if (!state.teacherFormOpen && !existing) return "";
+    if (!state.teacherDraft) state.teacherDraft = defaultTeacherDraft(existing);
+    const draft = state.teacherDraft,
+      availableClasses = state.db.classes.filter(
+        (klass) => !klass.teacherId || klass.teacherId === existing?.id || !!existing,
+      );
+    return `<section class="card" style="margin-bottom:15px"><div class="card-head"><div><h3 class="section-title">${existing ? "O‘qituvchini tahrirlash" : "Yangi o‘qituvchi"}</h3><p class="section-sub">Sinf rahbari va fan biriktirmalarini belgilang.</p></div><button class="btn btn-light btn-sm" type="button" data-action="cancel-teacher-form">Yopish</button></div><div class="card-body"><form data-form="teacher"><div class="form-grid"><div class="field"><label for="teacher-label">Yorliq</label><input id="teacher-label" name="label" maxlength="70" value="${esc(draft.label)}" required></div><div class="field"><label for="teacher-login">Login</label><input id="teacher-login" name="login" maxlength="32" value="${esc(draft.login || suggestTeacherLogin(draft.label))}" ${draft.login ? 'data-edited="true"' : ""} required></div><div class="field"><label for="teacher-full-name">F.I.Sh</label><input id="teacher-full-name" name="fullName" maxlength="90" value="${esc(draft.fullName)}"></div><div class="field"><label for="class-teacher">Sinf rahbari</label><select id="class-teacher" name="classTeacherId"><option value="">—</option>${availableClasses.map((klass) => { const current = klass.teacherId && klass.teacherId !== existing?.id ? state.db.teachers.find((teacher) => teacher.id === klass.teacherId) : null; return `<option value="${esc(klass.id)}" ${draft.classTeacherId === klass.id ? "selected" : ""}>${esc(klass.name)}${current ? ` · ${esc(current.label)} (almashtirish)` : ""}</option>`; }).join("")}</select></div></div><div style="margin-top:18px"><div class="card-head"><div><h3 class="section-title">Fan biriktirmalari</h3><p class="section-sub">Fan va shu fan o‘qitiladigan sinflarni belgilang.</p></div><button class="btn btn-light btn-sm" type="button" data-action="add-teacher-row">＋ Qator qo‘shish</button></div><div class="assignment-list">${draft.assignments.map((row) => teacherAssignmentRow(row, existing)).join("")}</div></div><div class="form-actions"><button class="btn">${existing ? "O‘zgarishlarni saqlash" : "O‘qituvchini saqlash"}</button></div></form></div></section>`;
+  }
+  function teacherView() {
+    const rows = state.db.teachers.map((teacher) => {
+      const classTeacherClass = state.db.classes.find((klass) => klass.teacherId === teacher.id),
+        bySubject = new Map();
+      for (const assignment of teacher.assignments || []) {
+        if (!bySubject.has(assignment.subjectId)) bySubject.set(assignment.subjectId, new Set());
+        bySubject.get(assignment.subjectId).add(assignment.classId);
+      }
+      const subjects = [...bySubject].map(([subjectId, classes]) => `${esc(subjectNameById(subjectId))} (${classes.size})`).join(", ") || "—",
+        removable = !classTeacherClass && !(teacher.assignments || []).length;
+      return `<tr><td><b>${esc(teacher.label)}</b>${teacher.active === false ? ' <span class="pill pill-neutral">Nofaol</span>' : ""}</td><td class="mono">${esc(teacher.login)}</td><td>${esc(classTeacherClass?.name || "—")}</td><td>${subjects}</td><td><div class="page-actions"><button class="btn btn-light btn-sm" data-action="edit-teacher" data-id="${esc(teacher.id)}">Tahrirlash</button><button class="btn btn-light btn-sm" data-action="reset-teacher-password" data-id="${esc(teacher.id)}">Parolni tiklash</button><button class="btn btn-light btn-sm" data-action="toggle-teacher" data-id="${esc(teacher.id)}">${teacher.active === false ? "Faollashtirish" : "Nofaol qilish"}</button><button class="btn btn-warn btn-sm" data-action="delete-teacher" data-id="${esc(teacher.id)}" ${removable ? "" : "disabled"}>O‘chirish</button></div></td></tr>`;
+    }).join("");
+    const dialog = state.temporaryPassword
+      ? `<dialog id="teacher-password-dialog" class="password-dialog"><h2>Vaqtinchalik parol</h2><p class="temporary-password">${esc(state.temporaryPassword.value)}</p><div class="form-actions"><button class="btn btn-light" data-action="copy-temporary-password">Nusxalash</button><button class="btn" data-action="close-temporary-password">Yopish</button></div><p class="small muted">Parol qayta ko‘rsatilmaydi.</p></dialog>`
+      : "";
+    return `${pageHead("O‘qituvchilar", "Sinf rahbarlari va fan o‘qituvchilarini boshqaring.", `<button class="btn" data-action="add-teacher">＋ Yangi o‘qituvchi</button>`)}${teacherForm()}<section class="card"><div class="card-head"><div><h3 class="section-title">O‘qituvchilar ro‘yxati</h3><p class="section-sub">${state.db.teachers.length} nafar o‘qituvchi</p></div></div>${rows ? `<div class="table-wrap"><table class="table"><thead><tr><th>Yorliq</th><th>Login</th><th>Sinf rahbari</th><th>Fanlar</th><th>Amallar</th></tr></thead><tbody>${rows}</tbody></table></div>` : emptyBlock("O‘qituvchilar yo‘q", "Yangi o‘qituvchi qo‘shish uchun tugmani bosing.")}</section>${dialog}`;
+  }
+  function subjectForm() {
+    if (!state.subjectFormOpen && !state.editSubject) return "";
+    return `<section class="card"><div class="card-head"><div><h3 class="section-title">${state.editSubject ? "Fanni nomlash" : "Yangi fan"}</h3><p class="section-sub">Nom o‘zgartirilganda mavjud bog‘lanishlar saqlanadi.</p></div><button class="btn btn-light btn-sm" data-action="cancel-subject-form">Yopish</button></div><div class="card-body"><form data-form="subject"><input type="hidden" name="oldName" value="${esc(state.editSubject || "")}"><div class="form-grid"><div class="field"><label>Fan nomi</label><input name="name" maxlength="90" value="${esc(state.editSubject || "")}" required></div></div><div class="form-actions"><button class="btn">${state.editSubject ? "Nomni saqlash" : "Fan qo‘shish"}</button></div></form></div></section>`;
+  }
+  function subjectsView() {
+    const names = [...state.db.subjects].sort((a, b) =>
+      a.localeCompare(b, "uz"),
+    );
+    return `${pageHead("Fanlar", "Fan nomlarini va ulardan foydalaniladigan joylarni boshqaring.", `<button class="btn" data-action="add-subject">＋ Fan qo‘shish</button>`)}<div class="grid">${subjectForm()}<section class="card"><div class="card-head"><div><h3 class="section-title">Fanlar ro‘yxati</h3><p class="section-sub">Ishlatilayotgan fanlarni o‘chirish mumkin emas; har bir qatorda foydalanish soni ko‘rsatiladi.</p></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Fan nomi</th><th>Rejadagi sinflar</th><th>Jadvaldagi darslar</th><th>Baholar</th><th>Jami foydalanish</th><th>Amallar</th></tr></thead><tbody>${names
+      .map((name) => {
+        const u = subjectUsage(name),
+          total = usageCount(u);
+        return `<tr><td><b>${esc(name)}</b></td><td>${u.curriculum}</td><td>${u.schedule}</td><td>${u.grades}</td><td>${total}</td><td><button class="btn btn-light btn-sm" data-action="edit-subject" data-name="${esc(name)}">Tahrirlash</button> <button class="btn btn-warn btn-sm" data-action="delete-subject" data-name="${esc(name)}">O‘chirish</button></td></tr>`;
+      })
+      .join("")}</tbody></table></div></section></div>`;
+  }
+  function studentForm(formState = state) {
+    const { db, user } = formState,
+      existing = formState.editStudentId
+      ? db.students.find((student) => student.id === formState.editStudentId)
+      : null;
+    if (!formState.studentFormOpen && !existing) return "";
+    const permitted = user.role === "developer"
+      ? db.classes
+      : db.classes.filter((klass) => teacherCanManageStudents(user.teacherId, klass.id, db));
+    return `<section class="card" style="margin-bottom:15px"><div class="card-head"><div><h3 class="section-title">${existing ? "O‘quvchini tahrirlash" : "Yangi o‘quvchi"}</h3><p class="section-sub">Login ism va familiyaga mos yaratiladi. Oldin berilgan login qayta berilmaydi.</p></div><button class="btn btn-light btn-sm" data-action="cancel-student-form">Yopish</button></div>
+      <div class="card-body"><form id="student-form" data-form="student"><input type="hidden" name="id" value="${esc(existing?.id || "")}"><div class="form-grid">
+      <div class="field"><label for="student-name">Ism-familiya</label><input id="student-name" name="fullName" value="${esc(existing?.fullName || "")}" maxlength="90" placeholder="Ali Valiyev" autocomplete="name" required></div>
+      <div class="field"><label for="student-username">Login</label><input id="student-username" name="username" value="${esc(existing?.username || "")}" data-edited="${existing ? "true" : "false"}" maxlength="32" autocomplete="off" aria-describedby="student-login-help" placeholder="ali.valiyev" required><div class="login-generator"><button class="btn btn-light btn-sm" type="button" data-action="generate-student-login">Avtomatik yaratish</button></div><span class="help" id="student-login-help" aria-live="polite">Ism va familiyani yozing. Band bo‘lsa, login oxiriga raqam qo‘shiladi.</span></div>
+      <div class="field"><label for="student-password">${existing ? "Yangi parol (ixtiyoriy)" : "Parol"}</label><input id="student-password" name="password" type="password" autocomplete="new-password" ${existing ? "" : "required"}><span class="help">Kamida 8 belgi, raqam yoki uchta so‘z; ism va login parolda bo‘lmasin.</span></div>
+      <div class="field"><label for="student-class">Sinf</label><select id="student-class" name="classId" required>${classOptions(existing?.classId || permitted[0]?.id, permitted)}</select></div></div><div class="form-actions"><button class="btn" type="submit">${existing ? "O‘zgarishlarni saqlash" : "O‘quvchini qo‘shish"}</button></div></form></div></section>`;
+  }
+  function updateStudentLogin(form, regenerate = false) {
+    const name = form.elements.namedItem("fullName"), input = form.elements.namedItem("username"),
+      existing = state.db.students.find((item) => item.id === form.elements.namedItem("id").value);
+    if (regenerate) input.dataset.edited = "false";
+    if (input.dataset.edited !== "true") input.value = suggestStudentLogin(name.value, state.db, existing?.id || "");
+    const message = studentLoginError(state.db, name.value.trim(), input.value.trim(), existing),
+      help = document.getElementById("student-login-help");
+    input.setCustomValidity(message);
+    input.setAttribute("aria-invalid", String(Boolean(message)));
+    if (help) {
+      help.textContent = message || "Login ism-familiyaga mos va bo‘sh. Saqlangach, shu o‘quvchiga biriktiriladi.";
+      help.classList.toggle("danger-text", Boolean(message));
+    }
+  }
+  function studentsView() {
+    const students = [...visibleStudentsForUser()].sort((a, b) =>
+      a.fullName.localeCompare(b.fullName, "uz"),
+    );
+    const rows = students
+      .map(
+        (s) =>
+          `<tr><td>${studentName(s)}</td><td><span class="pill pill-neutral">${esc(state.db.classes.find((c) => c.id === s.classId)?.name || "—")}</span></td><td class="mono">${esc(s.username)}</td><td><div style="display:flex;gap:5px"><button class="btn btn-light btn-sm" data-action="edit-student" data-id="${esc(s.id)}">Tahrirlash</button><button class="btn btn-light btn-sm" data-action="reset-student-password" data-id="${esc(s.id)}">Parol</button><button class="btn btn-warn btn-sm icon-btn" title="O‘chirish" data-action="delete-student" data-id="${esc(s.id)}">×</button></div></td></tr>`,
+      )
+      .join("");
+    return `${pageHead("O‘quvchilar", "Sinf ro‘yxati, kirish loginlari va o‘quvchi ma’lumotlarini boshqaring.", `<button class="btn" data-action="add-student">＋ O‘quvchi qo‘shish</button>`)}${studentForm()}<section class="card"><div class="card-head"><div><h3 class="section-title">Sinf ro‘yxati</h3><p class="section-sub">${students.length} nafar o‘quvchi</p></div></div>${students.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Ism-familiya</th><th>Sinf</th><th>Login</th><th>Amallar</th></tr></thead><tbody>${rows}</tbody></table></div>` : emptyBlock("Ro‘yxat hozircha bo‘sh", "Boshlash uchun birinchi o‘quvchini qo‘shing.", `<button class="btn btn-sm" data-action="add-student">O‘quvchi qo‘shish</button>`)}</section>`;
+  }
+  function attendanceView() {
+    const teacherClass = state.db.classes.find((klass) => klass.teacherId === state.user.teacherId);
+    if (!teacherClass)
+      return `${pageHead("Davomat", "Davomat va sinf jurnalini faqat sinf rahbari tahrirlaydi.")}${emptyBlock("Sinf rahbari sinfi yo‘q", "Davomatni tahrirlash uchun developer sizga sinf rahbari sinfini biriktirishi kerak.")}`;
+    const students = state.db.students.filter(
+      (student) => !student.archived && student.classId === teacherClass.id,
+    );
+    const rows = students
+      .map((s) => {
+        const record = state.db.attendance.find(
+          (a) => a.studentId === s.id && a.date === state.attendanceDate,
+        );
+        const status = record?.status || "present";
+        return `<tr><td>${studentName(s)}</td><td><select class="table-input" name="status-${esc(s.id)}" aria-label="${esc(s.fullName)} davomat holati"><option value="present" ${status === "present" ? "selected" : ""}>Keldi</option><option value="excused" ${status === "excused" ? "selected" : ""}>Sababli kelmadi</option><option value="unexcused" ${status === "unexcused" ? "selected" : ""}>Sababsiz kelmadi</option></select></td><td><input class="table-input" style="width:86px" type="number" min="0" max="${state.db.settings.lessonsPerDay}" name="skipped-${esc(s.id)}" value="${record?.skippedLessons || 0}" aria-label="${esc(s.fullName)} kirmagan darslar"></td></tr>`;
+      })
+      .join("");
+    return `${pageHead(`Davomat · ${esc(teacherClass.name)}`, "Kunlik holat va darsga kirmagan soatlarni belgilang.")}<section class="card"><div class="card-head"><div><h3 class="section-title">Kunlik davomat</h3><p class="section-sub">Sababli kelmagan o‘quvchiga jarima hisoblanmaydi.</p></div><button class="btn btn-light btn-sm" type="button" data-action="all-present">✓ Hammasi keldi</button></div><div class="card-body"><div class="filter-row" style="margin-bottom:16px"><div class="field"><label for="attendance-date">Sana</label>${dateInput("attendance-date", state.attendanceDate)}</div><span class="small muted">Bir kunda eng ko‘pi bilan ${state.db.settings.lessonsPerDay} ta dars.</span></div>${students.length ? `<form id="attendance-form" data-form="attendance"><input type="hidden" name="classId" value="${esc(teacherClass.id)}"><div class="table-wrap"><table class="table"><thead><tr><th>O‘quvchi</th><th>Davomat holati</th><th>Kirmagan dars</th></tr></thead><tbody>${rows}</tbody></table></div><div class="form-actions"><button class="btn btn-teal" type="submit">Davomatni saqlash</button></div></form>` : emptyBlock("O‘quvchilar yo‘q", "Davomat kiritishdan oldin sinfga o‘quvchi qo‘shing.", `<button class="btn btn-sm" data-action="navigate" data-view="students">Ro‘yxatga o‘tish</button>`)}</div></section>`;
+  }
+  function gradeQuickForm() {
+    const classes = state.db.classes.filter((klass) =>
+        teacherCanSeeClass(state.user.teacherId, klass.id),
+      ),
+      selectedClass = classes.find((klass) => klass.id === state.gradeClassId) || classes[0],
+      classId = selectedClass?.id || "",
+      teacher = teacherById(state.user.teacherId),
+      subjectIds = [...new Set((teacher?.assignments || [])
+        .filter((assignment) => assignment.classId === classId)
+        .map((assignment) => assignment.subjectId))],
+      subjects = subjectIds.map(subjectNameById).filter(Boolean),
+      students = state.db.students.filter(
+        (student) => !student.archived && student.classId === classId,
+      );
+    if (subjects.length && !subjects.includes(state.gradeSubject))
+      state.gradeSubject = subjects[0];
+    const entries = students
+      .map((s) => {
+        const grade = state.db.grades.find(
+          (g) =>
+            g.studentId === s.id &&
+            g.subject === state.gradeSubject &&
+            g.date === state.gradeDate,
+        );
+        return `<tr><td>${studentName(s)}</td><td><input class="table-input" type="number" min="${state.db.settings.gradeMin}" max="${state.db.settings.gradeMax}" step="1" name="grade-${esc(s.id)}" value="${grade ? esc(grade.value) : ""}" style="width:76px" aria-label="${esc(s.fullName)} bahosi"></td><td><input class="table-input" type="text" maxlength="180" name="comment-${esc(s.id)}" value="${esc(grade?.comment || "")}" placeholder="Izoh (ixtiyoriy)" style="width:min(260px,100%)"></td></tr>`;
+      })
+      .join("");
+    return `<section class="card"><div class="card-head"><div><h3 class="section-title">Tezkor baholash</h3><p class="section-sub">Bo‘sh qoldirilgan baho o‘zgarmaydi.</p></div></div><div class="card-body"><div class="filter-row" style="margin-bottom:16px"><div class="field"><label for="grade-class">Sinf</label><select id="grade-class">${classes.map((klass) => `<option value="${esc(klass.id)}" ${klass.id === classId ? "selected" : ""}>${esc(klass.name)}</option>`).join("")}</select></div><div class="field"><label for="grade-subject">Fan</label><select id="grade-subject" ${subjects.length ? "" : "disabled"}>${subjects.map((subject) => `<option ${subject === state.gradeSubject ? "selected" : ""}>${esc(subject)}</option>`).join("")}</select></div><div class="field"><label for="grade-date">Sana</label>${dateInput("grade-date", state.gradeDate)}</div></div>${subjects.length ? students.length ? `<form id="quick-grade-form" data-form="quick-grades"><input type="hidden" name="classId" value="${esc(classId)}"><div class="table-wrap"><table class="table"><thead><tr><th>O‘quvchi</th><th>Baho (${state.db.settings.gradeMin}–${state.db.settings.gradeMax})</th><th>Izoh</th></tr></thead><tbody>${entries}</tbody></table></div><div class="form-actions"><button class="btn btn-teal" type="submit">Baholarni saqlash</button></div></form>` : emptyBlock("O‘quvchilar yo‘q", "Tanlangan sinfda faol o‘quvchi yo‘q.") : emptyBlock("Fan biriktirilmagan", "Sizga ushbu sinf uchun fan biriktirilmagan.")}</div></section>`;
+  }
+  function gradeList() {
+    const f = state.gradeFilters;
+    const visibleIds = new Set(visibleStudentsForUser().map((student) => student.id));
+    const grades = state.db.grades
+      .filter(
+        (g) =>
+          visibleIds.has(g.studentId) &&
+          teacherCanEditGrade(state.user.teacherId, byStudent(g.studentId)?.classId, g.subject) &&
+          (!f.student || g.studentId === f.student) &&
+          (!f.subject || g.subject === f.subject) &&
+          (!f.from || g.date >= f.from) &&
+          (!f.to || g.date <= f.to),
+      )
+      .sort((a, b) => b.date.localeCompare(a.date));
+    const editorCandidate = state.editGradeId
+      ? state.db.grades.find((g) => g.id === state.editGradeId)
+      : null;
+    const editor = editorCandidate && teacherCanEditGrade(
+      state.user.teacherId,
+      byStudent(editorCandidate.studentId)?.classId,
+      editorCandidate.subject,
+    ) ? editorCandidate : null;
+    const visibleStudents = visibleStudentsForUser(),
+      visibleSubjects = [...new Set(state.db.teachers
+        .find((teacher) => teacher.id === state.user.teacherId)?.assignments
+        ?.map((assignment) => subjectNameById(assignment.subjectId)) || [])].filter(Boolean);
+    const editForm = editor
+      ? `<div class="card-body" style="border-bottom:1px solid var(--line);background:#f9fbfc"><form id="edit-grade-form" data-form="edit-grade"><input type="hidden" name="id" value="${esc(editor.id)}"><div class="form-grid"><div class="field"><label>O‘quvchi</label><select name="studentId">${visibleStudents.map((s) => `<option value="${esc(s.id)}" ${s.id === editor.studentId ? "selected" : ""}>${esc(s.fullName)}</option>`).join("")}</select></div><div class="field"><label>Fan</label><select name="subject">${visibleSubjects.map((s) => `<option ${s === editor.subject ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></div><div class="field"><label>Sana</label><input type="date" name="date" value="${esc(editor.date)}" required></div><div class="field"><label>Baho (${state.db.settings.gradeMin}–${state.db.settings.gradeMax})</label><input type="number" name="value" min="${state.db.settings.gradeMin}" max="${state.db.settings.gradeMax}" step="1" value="${esc(editor.value)}" required></div><div class="field" style="grid-column:span 2"><label>Izoh</label><input name="comment" maxlength="180" value="${esc(editor.comment || "")}"></div></div><div class="form-actions"><button class="btn btn-sm">Saqlash</button><button type="button" class="btn btn-light btn-sm" data-action="cancel-grade-edit">Bekor qilish</button></div></form></div>`
+      : "";
+    return `<section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">Kiritilgan baholar</h3><p class="section-sub">Filtrlang, tahrirlang yoki o‘chiring.</p></div><span class="pill pill-neutral">${grades.length} ta</span></div>${editForm}<div class="card-body"><form id="grade-filter-form" class="filter-row"><div class="field"><label for="filter-student">O‘quvchi</label><select id="filter-student" name="student"><option value="">Barchasi</option>${visibleStudents.map((s) => `<option value="${esc(s.id)}" ${f.student === s.id ? "selected" : ""}>${esc(s.fullName)}</option>`).join("")}</select></div><div class="field"><label for="filter-subject">Fan</label><select id="filter-subject" name="subject"><option value="">Barchasi</option>${visibleSubjects.map((s) => `<option ${f.subject === s ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></div><div class="field"><label for="filter-from">Dan</label><input id="filter-from" type="date" name="from" value="${esc(f.from)}"></div><div class="field"><label for="filter-to">Gacha</label><input id="filter-to" type="date" name="to" value="${esc(f.to)}"></div><button class="btn btn-light btn-sm">Filtrlash</button><button class="btn btn-light btn-sm" type="button" data-action="clear-grade-filters">Tozalash</button></form></div>${grades.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Sana</th><th>O‘quvchi</th><th>Fan</th><th>Baho</th><th>Izoh</th><th>Amallar</th></tr></thead><tbody>${grades.map((g) => `<tr><td>${prettyDate(g.date)}</td><td>${esc(byStudent(g.studentId)?.fullName || "O‘chirilgan o‘quvchi")}</td><td>${esc(g.subject)}</td><td><b>${esc(g.value)}</b></td><td>${esc(g.comment || "—")}</td><td><button class="btn btn-light btn-sm" data-action="edit-grade" data-id="${esc(g.id)}">Tahrirlash</button> <button class="btn btn-warn btn-sm" data-action="delete-grade" data-id="${esc(g.id)}">O‘chirish</button></td></tr>`).join("")}</tbody></table></div>` : emptyBlock("Baholar topilmadi", "Tanlangan filtrga mos baholar mavjud emas.")}</section>`;
+  }
+  function gradesView() {
+    return `${pageHead("Baholar", "Fan va sana bo‘yicha baholarni tez kiriting yoki mavjud yozuvlarni tahrirlang.")}${gradeQuickForm()}${gradeList()}`;
+  }
+  function curriculumBanner() {
+    return `<div class="banner banner-info"><span>i</span><div>Ma’lumotlar Maktabgacha va maktab ta’limi vazirligining tayanch o‘quv rejasiga asosan to‘ldiriladi. Ayrim sinflarda soatlar farq qilishi mumkin.</div>${state.db.curriculumConfirmed ? "" : '<span class="pill pill-excused">Taxminiy — tasdiqlash kerak</span>'}</div>`;
+  }
+  function curriculumReadView() {
+    const student = state.user.role === "student",
+      studentClass = student ? studentClassForView() : null;
+    const grade = student
+      ? Number(studentClass?.grade || 1)
+      : Number(state.curriculumGrade || 1);
+    const entries = curriculumForGrade(grade)
+      .map((row) => ({ row, name: subjectNameById(row.subjectId) }))
+      .filter((x) => x.name)
+      .sort((a, b) => a.name.localeCompare(b.name, "uz"));
+    return `${curriculumBanner()}${pageHead("O‘quv reja", student ? "Sinfingizda o‘tiladigan fanlar va haftalik soatlar." : "Tanlangan bosqich uchun o‘quv reja ma’lumotlari.")}<section class="card"><div class="card-head"><div><h3 class="section-title">${student ? esc(studentClass?.name || "Sinf") : grade + "-sinf fanlari"}</h3><p class="section-sub">Bu oynada o‘quv reja faqat ko‘rish uchun.</p></div>${student ? "" : `<div class="field"><label for="read-curriculum-grade">Sinf bosqichi</label><select id="read-curriculum-grade">${GRADES.map((g) => `<option value="${g}" ${g === grade ? "selected" : ""}>${g}-sinf</option>`).join("")}</select></div>`}</div>${entries.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Fan</th><th>Haftalik soat</th></tr></thead><tbody>${entries.map(({ row, name }) => `<tr><td>${esc(name)}</td><td>${row.weeklyHours == null ? "Ko‘rsatilmagan" : `${row.weeklyHours} soat`}</td></tr>`).join("")}</tbody></table></div>` : emptyBlock("Bu sinf uchun fanlar belgilanmagan", "Dasturchi o‘quv reja jadvalini yangilashi kerak.")}</section>`;
+  }
+  function studentClassForView() {
+    return studentClass(state.user.studentId);
+  }
+  function curriculumView() {
+    if (state.user.role !== "developer") return curriculumReadView();
+    const rows = state.db.subjects
+      .map((name) => ({ name, subjectId: subjectIdForName(name) }))
+      .sort((a, b) => a.name.localeCompare(b.name, "uz"));
+    const entries = new Map(
+      state.db.curriculum.map((row) => [`${row.grade}|${row.subjectId}`, row]),
+    );
+    return `${curriculumBanner()}${pageHead("O‘quv reja", "Har bir fan uchun qaysi sinflarda o‘tilishini va haftalik soatlarni belgilang.")}<section class="card"><div class="card-head"><div><h3 class="section-title">Fanlar va sinflar</h3><p class="section-sub">Belgilang: fan shu bosqichda o‘tiladi. Soat maydoni ixtiyoriy, 0–12 oralig‘ida.</p></div><span class="pill pill-neutral">${state.db.curriculum.length} ta bog‘lanish</span></div><form data-form="curriculum"><div class="table-wrap"><table class="table"><thead><tr><th>Fan</th>${GRADES.map((g) => `<th>${g}</th>`).join("")}</tr></thead><tbody>${rows
+      .map(
+        ({ name, subjectId }) =>
+          `<tr><td><b>${esc(name)}</b></td>${GRADES.map((grade) => {
+            const entry = entries.get(`${grade}|${subjectId}`);
+            return `<td><label><input type="checkbox" name="curr__${subjectId}__${grade}" ${entry ? "checked" : ""} aria-label="${esc(name)}, ${grade}-sinfda o‘tiladi"><input class="table-input" type="number" min="0" max="12" step="1" name="hours__${subjectId}__${grade}" value="${entry?.weeklyHours ?? ""}" aria-label="${esc(name)}, ${grade}-sinf haftalik soati"></label></td>`;
+          }).join("")}</tr>`,
+      )
+      .join(
+        "",
+      )}</tbody></table></div><div class="card-body"><button class="btn btn-teal" type="submit">O‘quv rejani saqlash</button></div></form></section>`;
+  }
+  const WEEKDAYS = [
+    "Dushanba",
+    "Seshanba",
+    "Chorshanba",
+    "Payshanba",
+    "Juma",
+    "Shanba",
+  ];
+  function scheduleSubjectOptions(
+    grade,
+    currentId = "",
+    invalidCurrent = false,
+  ) {
+    const allowed = curriculumForGrade(grade).map((r) => r.subjectId);
+    return `<option value="__remove__" ${!currentId ? "selected" : ""}>— dars yo‘q —</option>${invalidCurrent ? '<option value="__keep__" selected>Avvalgi darsni saqlash</option>' : ""}${allowed
+      .map((subjectId) => {
+        const name = subjectNameById(subjectId) || subjectId;
+        return `<option value="${esc(subjectId)}" ${subjectId === currentId ? "selected" : ""}>${esc(name)}</option>`;
+      })
+      .join("")}`;
+  }
+  function groupedClassOptions(selected, availableClasses = null) {
+    if (!availableClasses)
+      availableClasses = state.user?.role === "developer"
+        ? state.db.classes
+        : state.user?.role === "teacher"
+          ? state.db.classes.filter((klass) => teacherCanSeeClass(state.user.teacherId, klass.id))
+          : [studentClassForView()].filter(Boolean);
+    return GRADES.map((grade) => {
+      const group = availableClasses
+        .filter((klass) => Number(klass.grade) === grade)
+        .sort(
+          (a, b) =>
+            String(a.section).localeCompare(String(b.section), "uz") ||
+            a.name.localeCompare(b.name, "uz"),
+        );
+      return group.length
+        ? `<optgroup label="${grade}">${group.map((klass) => `<option value="${esc(klass.id)}" ${klass.id === selected ? "selected" : ""}>${esc(klass.name)}</option>`).join("")}</optgroup>`
+        : "";
+    }).join("");
+  }
+  function curriculumAllows(grade, subjectId) {
+    return curriculumForGrade(grade).some((row) => row.subjectId === subjectId);
+  }
+  function generateTimetable(
+    grade,
+    lessonsPerDay,
+    curriculumRows,
+    rng = Math.random,
+  ) {
+    const rows = (Array.isArray(curriculumRows) ? curriculumRows : []).filter(
+        (row) => row.grade == null || Number(row.grade) === Number(grade),
+      ),
+      bySubject = new Map();
+    for (const row of rows) {
+      const subjectId = String(row.subjectId || "");
+      if (!subjectId) continue;
+      if (!bySubject.has(subjectId)) {
+        const value = row.weeklyHours;
+        bySubject.set(subjectId, {
+          subjectId,
+          weeklyHours: value === "" || value == null ? null : Number(value),
+        });
+      }
+    }
+    const subjects = [...bySubject.values()];
+    if (!subjects.length) return { error: "Bu daraja uchun o‘quv reja yo‘q" };
+    if (
+      !Number.isInteger(Number(lessonsPerDay)) ||
+      Number(lessonsPerDay) < 1 ||
+      Number(lessonsPerDay) > 20
+    )
+      return { error: "Kunlik darslar soni noto‘g‘ri" };
+    if (
+      subjects.some(
+        (subject) =>
+          subject.weeklyHours !== null &&
+          (!Number.isInteger(subject.weeklyHours) ||
+            subject.weeklyHours < 0 ||
+            subject.weeklyHours > 12),
+      )
+    )
+      return { error: "O‘quv reja haftalik soatlari noto‘g‘ri" };
+    const perDay = Number(lessonsPerDay),
+      slotCount = 6 * perDay,
+      known = subjects.filter((subject) => subject.weeklyHours !== null),
+      unknown = subjects.filter((subject) => subject.weeklyHours === null),
+      counts = new Map(
+        subjects.map((subject) => [
+          subject.subjectId,
+          subject.weeklyHours ?? 1,
+        ]),
+      );
+    let warning = "";
+    const proportionalCounts = (weights) => {
+      const sum = [...weights.values()].reduce((a, b) => a + b, 0),
+        result = new Map(),
+        fractions = [];
+      let allocated = 0;
+      for (const [subjectId, weight] of weights) {
+        const exact = sum ? (weight * slotCount) / sum : 0,
+          count = Math.floor(exact);
+        result.set(subjectId, count);
+        allocated += count;
+        fractions.push({
+          subjectId,
+          fraction: exact - count,
+          tie: Number(rng()) || 0,
+        });
+      }
+      fractions.sort((a, b) => b.fraction - a.fraction || a.tie - b.tie);
+      for (let i = 0; i < slotCount - allocated; i++)
+        result.set(
+          fractions[i % fractions.length].subjectId,
+          result.get(fractions[i % fractions.length].subjectId) + 1,
+        );
+      return result;
+    };
+    const desiredTotal = [...counts.values()].reduce((a, b) => a + b, 0);
+    if (desiredTotal > slotCount) {
+      const reduced = proportionalCounts(counts);
+      counts.clear();
+      for (const [subjectId, count] of reduced) counts.set(subjectId, count);
+      warning = "Soatlar sig‘madi, ayrim fanlar kamaytirildi";
+    } else if (unknown.length) {
+      let remaining = slotCount - desiredTotal;
+      while (remaining > 0) {
+        const lowest = Math.min(
+            ...unknown.map((subject) => counts.get(subject.subjectId)),
+          ),
+          tied = unknown.filter(
+            (subject) => counts.get(subject.subjectId) === lowest,
+          ),
+          chosen =
+            tied[
+              Math.min(
+                tied.length - 1,
+                Math.floor(
+                  Math.max(0, Math.min(0.999999999, Number(rng()) || 0)) *
+                    tied.length,
+                ),
+              )
+            ];
+        counts.set(chosen.subjectId, counts.get(chosen.subjectId) + 1);
+        remaining--;
+      }
+    } else {
+      let remaining = slotCount - desiredTotal;
+      while (remaining > 0) {
+        const pick = Math.min(
+            subjects.length - 1,
+            Math.floor(
+              Math.max(0, Math.min(0.999999999, Number(rng()) || 0)) *
+                subjects.length,
+            ),
+          ),
+          subjectId = subjects[pick].subjectId;
+        counts.set(subjectId, counts.get(subjectId) + 1);
+        remaining--;
+      }
+    }
+    const shuffle = (list) => {
+      const result = [...list];
+      for (let i = result.length - 1; i > 0; i--) {
+        const value = Math.max(0, Math.min(0.999999999, Number(rng()) || 0)),
+          j = Math.floor(value * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
+      return result;
+    };
+    const score = (placed) => {
+      const daily = new Map();
+      for (const row of placed) {
+        const key = `${row.weekday}|${row.subjectId}`;
+        daily.set(key, (daily.get(key) || 0) + 1);
+      }
+      return [...daily.values()].reduce(
+        (total, count) => total + Math.max(0, count - 1),
+        0,
+      );
+    };
+    let bestRows = null,
+      bestRepeats = Infinity;
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const priority = shuffle(subjects.map((subject) => subject.subjectId)),
+        priorityIndex = new Map(
+          priority.map((subjectId, index) => [subjectId, index]),
+        ),
+        remaining = new Map(counts),
+        placed = [];
+      for (let weekday = 1; weekday <= 6; weekday++) {
+        const chosen = [];
+        for (let slot = 0; slot < perDay; slot++) {
+          const active = [...remaining]
+            .filter(([, count]) => count > 0)
+            .map(([subjectId, count]) => ({ subjectId, count }))
+            .sort(
+              (a, b) =>
+                b.count - a.count ||
+                priorityIndex.get(a.subjectId) - priorityIndex.get(b.subjectId),
+            );
+          if (!active.length) break;
+          const distinct = active.filter(
+              (entry) => !chosen.includes(entry.subjectId),
+            ),
+            pool = distinct.length ? distinct : active,
+            topCount = pool[0].count,
+            tied = pool.filter((entry) => entry.count === topCount),
+            picked =
+              tied[
+                Math.min(
+                  tied.length - 1,
+                  Math.floor(
+                    Math.max(0, Math.min(0.999999999, Number(rng()) || 0)) *
+                      tied.length,
+                  ),
+                )
+              ];
+          chosen.push(picked.subjectId);
+          remaining.set(picked.subjectId, remaining.get(picked.subjectId) - 1);
+        }
+        for (const subjectId of shuffle(chosen))
+          placed.push({
+            weekday,
+            lessonNo:
+              placed.filter((row) => row.weekday === weekday).length + 1,
+            subjectId,
+            startTime: "",
+            endTime: "",
+          });
+      }
+      const repeats = score(placed);
+      if (placed.length === slotCount && repeats < bestRepeats) {
+        bestRows = placed;
+        bestRepeats = repeats;
+        if (repeats === 0) break;
+      }
+    }
+    if (!bestRows) return { error: "Dars jadvalini tuzib bo‘lmadi" };
+    return {
+      rows: bestRows,
+      repeats: bestRepeats,
+      warning: warning || null,
+    };
+  }
+  function timetableView() {
+    const developer = state.user.role === "developer",
+      student = state.user.role === "student",
+      availableClasses = student
+        ? [studentClassForView()].filter(Boolean)
+        : developer
+          ? state.db.classes
+          : state.db.classes.filter((klass) => teacherCanSeeClass(state.user.teacherId, klass.id));
+    const selectedClass = student
+      ? studentClassForView()
+      : availableClasses.find((klass) => klass.id === state.scheduleClassId) || availableClasses[0];
+    if (selectedClass && !student) state.scheduleClassId = selectedClass.id;
+    if (!selectedClass)
+      return `${pageHead("Dars jadvali", "Avval sinf yarating.")} ${emptyBlock("Sinflar topilmadi", "Dasturchi sinflar oynasida sinf qo‘shishi kerak.")}`;
+    const grade = Number(selectedClass.grade),
+      editing = developer && state.scheduleEditMode,
+      selectedLessons = state.db.timetable.filter(
+        (row) => row.classId === selectedClass.id,
+      ),
+      periods = Array.from(
+        { length: Number(state.db.settings.lessonsPerDay || 7) },
+        (_, i) => i + 1,
+      );
+    const actions =
+      developer && !editing
+        ? `<button class="btn btn-light" data-action="random-timetable">Random tuzish</button><button class="btn btn-light" data-action="bulk-random-timetable">Hammasini random tuzish</button><button class="btn btn-light" data-action="edit-timetable">Jadvalni o‘zgartirish</button><button class="btn btn-warn" data-action="clear-timetable">Jadvalni tozalash</button>`
+        : "";
+    const rows = WEEKDAYS.map(
+      (day, dayIndex) =>
+        `<tr><td class="day-label"><b>${day}</b></td>${periods
+          .map((lessonNo) => {
+            const weekday = dayIndex + 1,
+              existing = selectedLessons.find(
+                (row) => row.weekday === weekday && row.lessonNo === lessonNo,
+              ),
+              invalid =
+                existing && !curriculumAllows(grade, existing.subjectId),
+              name = existing
+                ? subjectNameById(existing.subjectId) || "Noma’lum fan"
+                : "";
+            let cell = "—";
+            if (editing) {
+              cell = `${invalid ? `<div>${esc(name)} <span class="pill pill-unexcused">Rejada yo‘q</span></div>` : ""}<select class="table-input" name="lesson__${weekday}__${lessonNo}" aria-label="${day}, ${lessonNo}-dars">${scheduleSubjectOptions(grade, existing?.subjectId || "", Boolean(invalid))}</select><input class="table-input" type="time" name="start__${weekday}__${lessonNo}" value="${esc(existing?.startTime || "")}" aria-label="${day}, ${lessonNo}-dars boshlanishi"><input class="table-input" type="time" name="end__${weekday}__${lessonNo}" value="${esc(existing?.endTime || "")}" aria-label="${day}, ${lessonNo}-dars tugashi>`;
+            } else if (existing) {
+              cell = `${esc(name)}${invalid ? '<div class="pill pill-unexcused">Rejada yo‘q</div>' : ""}${existing.startTime || existing.endTime ? `<div class="small">${esc(existing.startTime || "—")}–${esc(existing.endTime || "—")}</div>` : ""}`;
+            }
+            const cellClass = editing
+              ? "lesson-editing"
+              : existing
+                ? "lesson-filled"
+                : "lesson-empty";
+            return `<td class="${cellClass}">${cell}</td>`;
+          })
+          .join("")}</tr>`,
+    ).join("");
+    const subjectIds = [
+      ...new Set([
+        ...curriculumForGrade(grade).map((row) => row.subjectId),
+        ...selectedLessons.map((row) => row.subjectId),
+      ]),
+    ].sort((a, b) =>
+      (subjectNameById(a) || a).localeCompare(subjectNameById(b) || b, "uz"),
+    );
+    const summary = subjectIds.length
+      ? `<section class="card"><div class="card-head"><div><h3 class="section-title">Fanlar bo‘yicha soatlar</h3><p class="section-sub">Rejadagi va jadvalga joylangan haftalik darslar.</p></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Fan</th><th>Rejadagi soat</th><th>Jadvaldagi soat</th></tr></thead><tbody>${subjectIds
+          .map((subjectId) => {
+            const plan = curriculumForGrade(grade).find(
+                (row) => row.subjectId === subjectId,
+              ),
+              actual = selectedLessons.filter(
+                (row) => row.subjectId === subjectId,
+              ).length;
+            return `<tr><td>${esc(subjectNameById(subjectId) || "Noma’lum fan")}${plan ? "" : ' <span class="pill pill-unexcused">Rejada yo‘q</span>'}</td><td>${!plan ? "—" : plan.weeklyHours == null ? "Belgilanmagan" : plan.weeklyHours}</td><td>${actual}</td></tr>`;
+          })
+          .join("")}</tbody></table></div></section>`
+      : emptyBlock(
+          "O‘quv reja topilmadi",
+          "Bu daraja uchun fanlar belgilanmagan.",
+        );
+    const dialog = developer
+      ? `<dialog id="bulk-random-dialog" class="card"><div class="card-head"><div><h3 class="section-title">Barcha sinflar uchun random jadval</h3><p class="section-sub">Bo‘sh jadvallar tuziladi. Belgilansa, mavjud jadvallar ham almashtiriladi.</p></div></div><div class="card-body"><label><input id="replace-existing-timetables" type="checkbox"> Qo‘lda kiritilgan jadvallarni ham almashtirish</label><div class="form-actions"><button class="btn btn-teal" data-action="bulk-random-confirm">Davom etish</button><button class="btn btn-light" data-action="bulk-random-cancel">Bekor qilish</button></div></div></dialog>`
+      : "";
+    return `${pageHead("Dars jadvali", developer ? "Tanlangan sinf uchun fanlarni reja asosida random tuzing yoki qo‘lda tahrirlang." : "Tanlangan sinfning dars jadvali.")}${developer ? `<div class="toolbar"><div class="field"><label for="schedule-class">Sinf</label><select id="schedule-class">${groupedClassOptions(selectedClass.id)}</select></div><div class="page-actions">${actions}</div></div>` : ""}<section class="card"><div class="card-head"><div><h3 class="section-title">${esc(selectedClass.name)} · ${grade}-sinf</h3><p class="section-sub">${editing ? "Har bir dars uchun fan va ixtiyoriy vaqtni belgilang." : "Saqlangan dars jadvali"}${selectedLessons.length ? ` · ${selectedLessons.length} ta dars` : ""}</p></div>${!developer && !student ? `<div class="field"><label for="schedule-class">Sinf</label><select id="schedule-class">${groupedClassOptions(selectedClass.id)}</select></div>` : ""}</div>${editing ? `<form id="timetable-edit-form" data-form="timetable" data-class-id="${esc(selectedClass.id)}">` : ""}<div class="table-wrap"><table class="table timetable"><thead><tr><th>Hafta kuni</th>${periods.map((p) => `<th>${p}-dars</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>${editing ? "</form>" : ""}</section>${editing ? `<div class="page-actions"><button class="btn btn-teal" form="timetable-edit-form" type="submit">Saqlash</button><button class="btn btn-light" data-action="cancel-timetable-edit">Bekor qilish</button></div>` : ""}${summary}${dialog}`;
+  }
+  function availableWeeks() {
+    const values = new Set([
+      mondayOf(todayISO()),
+      ...state.db.weeklySnapshots.map((s) => s.weekStart),
+      ...state.db.grades.map((g) => mondayOf(g.date)),
+      ...state.db.attendance.map((a) => mondayOf(a.date)),
+    ]);
+    for (let i = 1; i <= 7; i++)
+      values.add(addDays(mondayOf(todayISO()), -7 * i));
+    return [...values].sort((a, b) => b.localeCompare(a));
+  }
+  function ratingView() {
+    const snapshot = state.db.weeklySnapshots.find((item) => item.weekStart === state.ratingWeek),
+      weeks = availableWeeks(),
+      visibleIds = state.user.role === "teacher" ? new Set(teacherClassIds(state.user.teacherId)) : null,
+      classRows = classRatingsForData(state.db, state.ratingWeek),
+      schoolRows = snapshot
+        ? savedStudentRatings(snapshot)
+        : calculateRatings(state.db, state.ratingWeek),
+      visibleClasses = state.user.role === "teacher"
+        ? state.db.classes.filter((klass) => visibleIds.has(klass.id))
+        : state.db.classes,
+      visibleClassRows = classRows && classRows.filter((row) =>
+        visibleClasses.some((klass) => klass.id === row.classId),
+      ),
+      visibleSchoolRows = schoolRows && schoolRows.filter((row) =>
+        state.user.role !== "teacher" ||
+          visibleIds.has(row.classId ?? state.db.students.find((student) => student.id === row.studentId)?.classId),
+      ),
+      missingSnapshot = Boolean(snapshot && !classRows);
+    const classTable = visibleClassRows
+      ? `<div class="table-wrap"><table class="table"><thead><tr><th>O‘rin</th><th>Sinf</th><th>O‘quvchilar</th><th>O‘rtacha ball</th></tr></thead><tbody>${visibleClassRows.map((row) => `<tr><td>${row.rank}</td><td><b>${esc(row.className)}</b></td><td>${row.studentCount}</td><td class="score">${fmt(row.averageScore)}</td></tr>`).join("")}</tbody></table></div>`
+      : '<div class="card-body muted">—</div>';
+    const schoolTable = visibleSchoolRows
+      ? `<div class="table-wrap"><table class="table"><thead><tr><th>O‘rin</th><th>O‘quvchi</th><th>O‘rtacha baho</th><th>Ball</th></tr></thead><tbody>${visibleSchoolRows.map((row, index) => `<tr><td>${row.rank || index + 1}</td><td>${studentName(row)}</td><td>${fmt(row.avg)}</td><td class="score">${fmt(row.score)}</td></tr>`).join("")}</tbody></table></div>`
+      : '<div class="card-body muted">—</div>';
+    const visibleStudentCount = state.user.role === "teacher"
+      ? state.db.students.filter((student) => !student.archived && visibleIds.has(student.classId)).length
+      : state.db.students.filter((student) => !student.archived).length;
+    return `${pageHead("Haftalik reyting", "Sinf va maktab reytingini ko‘ring.", `${snapshot ? '<span class="pill pill-neutral">Hafta yopilgan</span>' : `<button class="btn btn-sun" data-action="close-week">✓ Haftani yopish</button>`}`)}<section class="card"><div class="card-head"><div><h3 class="section-title">Sinf reytingi</h3><p class="section-sub">${snapshot ? `Muzlatilgan natija · ${prettyDate(snapshot.closedAt.slice(0, 10))}` : "Har bir sinf o‘quvchilarining o‘rtacha haftalik bali"}</p></div><div class="field week-select"><label for="rating-week">Hafta</label><select id="rating-week">${weeks.map((week) => `<option value="${week}" ${week === state.ratingWeek ? "selected" : ""}>${esc(weekLabel(week))}</option>`).join("")}</select></div></div>${classTable}</section><section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">Maktab reytingi</h3><p class="section-sub">${visibleStudentCount} nafar faol o‘quvchi${missingSnapshot ? " · eski saqlangan haftada reyting yo‘q" : ""}</p></div></div>${schoolTable}<div class="card-body" style="border-top:1px solid var(--line)"><div class="note-box">Ball = o‘rtacha baho × ${state.db.settings.weights.avgMultiplier} − sababsiz kun × ${state.db.settings.weights.unexcusedAbsencePenalty} − kirmagan dars × ${state.db.settings.weights.skippedLessonPenalty}. Sababli kelmagan kunlar jarima bermaydi.</div></div></section>`;
+  }
+  function settingsView() {
+    const s = state.db.settings,
+      w = s.weights;
+    return `${pageHead("Sozlamalar", "Reyting hisobini, darslar sonini va kirish parolini sozlang.")}<div class="grid grid-2"><section class="card"><div class="card-head"><div><h3 class="section-title">Reyting va baholash</h3><p class="section-sub">O‘zgarishlar keyingi hisob-kitoblarga darhol ta’sir qiladi.</p></div></div><div class="card-body"><form id="settings-form" data-form="settings"><div class="form-grid"><div class="field"><label for="weight-average">O‘rtacha baho ko‘paytuvchisi</label><input id="weight-average" name="avgMultiplier" type="number" min="0" max="100" step="0.1" value="${w.avgMultiplier}" required></div><div class="field"><label for="weight-unexcused">Sababsiz kun jarimasi</label><input id="weight-unexcused" name="unexcusedAbsencePenalty" type="number" min="0" max="100" step="0.1" value="${w.unexcusedAbsencePenalty}" required></div><div class="field"><label for="weight-skipped">Kirmagan dars jarimasi</label><input id="weight-skipped" name="skippedLessonPenalty" type="number" min="0" max="100" step="0.1" value="${w.skippedLessonPenalty}" required></div><div class="field"><label for="grade-min">Eng past baho</label><input id="grade-min" name="gradeMin" type="number" min="1" max="10" value="${s.gradeMin}" required></div><div class="field"><label for="grade-max">Eng yuqori baho</label><input id="grade-max" name="gradeMax" type="number" min="1" max="10" value="${s.gradeMax}" required></div><div class="field"><label for="lessons-per-day">Kunlik darslar soni</label><input id="lessons-per-day" name="lessonsPerDay" type="number" min="1" max="20" value="${s.lessonsPerDay}" required></div></div><div class="settings-row" style="margin-top:14px"><div><b>O‘quvchilar reyting ro‘yxatini ko‘rsin</b><small>Yoqilsa, o‘quvchi o‘z o‘rnidan tashqari Top 10 ni ham ko‘radi.</small></div><label class="toggle" aria-label="Reytingni o‘quvchilarga ko‘rsatish"><input type="checkbox" name="showRankingToStudents" ${s.showRankingToStudents ? "checked" : ""}><span></span></label></div><div class="form-actions"><button class="btn">Sozlamalarni saqlash</button></div></form></div></section><section class="card"><div class="card-head"><div><h3 class="section-title">O‘qituvchi paroli</h3><p class="section-sub">Yangi parol uchun umumiy parol qoidasiga amal qiling.</p></div></div><div class="card-body"><form id="password-form" data-form="teacher-password"><div class="field" style="margin-bottom:12px"><label for="old-password">Joriy parol</label><input id="old-password" type="password" name="oldPassword" autocomplete="current-password" required></div><div class="field" style="margin-bottom:12px"><label for="new-password">Yangi parol</label><input id="new-password" type="password" name="newPassword"  autocomplete="new-password" required></div><div class="field"><label for="confirm-password">Yangi parolni takrorlang</label><input id="confirm-password" type="password" name="confirmPassword"  autocomplete="new-password" required></div><div class="form-actions"><button class="btn btn-teal">Parolni yangilash</button></div></form><div class="note-box" style="margin-top:16px">Parol brauzerda SHA-256 xesh ko‘rinishida saqlanadi. Haqiqiy himoya uchun server tomonida autentifikatsiya kerak.</div></div></section></div>`;
+  }
+  function curriculumCsvSection() {
+    return state.user.role === "developer"
+      ? `<section class="card"><div class="card-head"><div><h3 class="section-title">Tayanch o‘quv reja CSV</h3><p class="section-sub">CSV import joriy o‘quv rejani almashtiradi. Xato qatorlar hisobotda qoladi.</p></div></div><div class="card-body"><div class="field"><label for="import-curriculum">Tayanch o‘quv reja CSV fayli</label><input id="import-curriculum" type="file" accept=".csv,text/csv"></div><p class="small muted">Ustunlar: grade, subject, weekly_hours. Haftalik soat maydoni bo‘sh qolishi mumkin.</p></div></section>`
+      : "";
+  }
+  function curriculumReportView() {
+    const report = state.curriculumImportReport;
+    if (!report) return "";
+    return `<section class="card"><div class="card-head"><div><h3 class="section-title">Tayanch o‘quv reja import hisoboti</h3><p class="section-sub">${esc(report.summary)}</p></div></div><div class="card-body">${report.errors.length ? `<ul class="small danger-text">${report.errors.map((row) => `<li>${esc(row)}</li>`).join("")}</ul>` : '<span class="pill pill-present">Xato qator yo‘q</span>'}</div></section>`;
+  }
+  function jsonImportPanel() {
+    if (state.user?.role !== "developer") return "";
+    const pending = state.jsonImportPending,
+      preview = state.jsonImportPreview,
+      last = state.jsonImportReport;
+    const rejectionList = (report) =>
+      report.errors.length
+        ? `<ul class="small danger-text" style="margin:0;padding-left:19px">${report.errors.map((error) => `<li>${esc(error)}</li>`).join("")}</ul>`
+        : '<span class="pill pill-present">Rad etilgan qator yo‘q</span>';
+    const resultCard = (title, report) =>
+      `<section class="card" style="margin-top:14px"><div class="card-head"><div><h3 class="section-title">${title}</h3><p class="section-sub">Qo‘shildi: ${report.added} · Yangilandi: ${report.updated} · Rad etildi: ${report.rejected}</p></div></div><div class="card-body">${rejectionList(report)}</div></section>`;
+    return `<section class="card"><div class="card-head"><div><h3 class="section-title">JSON import</h3><p class="section-sub">Fayldagi bo‘limlarni qo‘shing yoki almashtiring. Fayl faqat tanlaganingizda o‘qiladi.</p></div></div><div class="card-body"><div class="field"><label for="import-json">JSON faylini tanlang</label><input id="import-json" type="file" accept="application/json,.json"></div>${pending ? `<div class="field" style="margin-top:14px"><label for="json-import-mode">Import usuli</label><select id="json-import-mode"><option value="" ${state.jsonImportMode ? "" : "selected"}>Usulni tanlang</option><option value="merge" ${state.jsonImportMode === "merge" ? "selected" : ""}>Qo‘shish</option><option value="replace" ${state.jsonImportMode === "replace" ? "selected" : ""}>Almashtirish</option></select></div><p class="small muted" style="margin:9px 0 0">Tanlanmagan bo‘limlar mavjud holicha qoladi.</p>${preview ? resultCard("JSON import hisoboti", preview) : '<p class="small muted">Saqlashdan oldin import usulini tanlang.</p>'}<div class="form-actions"><button class="btn btn-teal" data-action="json-import-save" ${preview?.ready ? "" : "disabled"}>Saqlash</button><button class="btn btn-light" data-action="json-import-cancel">Bekor qilish</button></div>` : ""}</div></section>${last ? resultCard("Oxirgi JSON import hisoboti", last) : ""}`;
+  }
+  async function readPlacementCSV(file) {
+    if (state.user?.role !== "developer") {
+      notify("O‘quvchilarni joylash faqat dasturchi uchun.");
+      return;
+    }
+    try {
+      const rows = csvParse((await file.text()).replace(/^\uFEFF/, ""));
+      if (rows.length < 1) throw new Error("CSV fayli bo‘sh.");
+      const headers = rows[0].map((value) => value.trim()),
+        required = ["student_id", "full_name", "class", "username", "password_hash"];
+      if (!required.every((header) => headers.includes(header)))
+        throw new Error("Ustunlar: student_id, full_name, class, username, password_hash.");
+      const column = Object.fromEntries(required.map((name) => [name, headers.indexOf(name)])),
+        seenIds = new Set(),
+        seenLogins = new Set(),
+        fileIds = new Set(),
+        valid = [],
+        rejected = [];
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i],
+          rowNumber = i + 1,
+          externalId = String(row[column.student_id] || "").trim(),
+          fullName = String(row[column.full_name] || "").trim(),
+          className = String(row[column.class] || "").trim(),
+          username = String(row[column.username] || "").trim(),
+          passwordHash = String(row[column.password_hash] || "").trim(),
+          issues = [];
+        if (externalId) fileIds.add(externalId);
+        if (!externalId) issues.push("student_id bo‘sh");
+        else if (seenIds.has(externalId)) issues.push("student_id takrorlangan");
+        else seenIds.add(externalId);
+        if (!fullName) issues.push("full_name bo‘sh");
+        if (className && !/^([1-9]|1[01])-[A-Z]$/.test(className))
+          issues.push("class ^([1-9]|1[01])-[A-Z]$ formatida bo‘lsin");
+        const login = normalizedLogin(username),
+          matched = state.db.students.find((student) =>
+            String(student.externalId || student.student_id || "") === externalId,
+          ),
+          owner = state.db.students.find((student) => normalizedLogin(student.username) === login);
+        if (!username) issues.push("username bo‘sh");
+        else if (seenLogins.has(login)) issues.push("username faylda takrorlangan");
+        else seenLogins.add(login);
+        if (username && owner && owner.id !== matched?.id)
+          issues.push("username boshqa o‘quvchiga tegishli");
+        if (username) {
+          const error = studentLoginError(state.db, fullName, username, matched);
+          if (error) issues.push(error);
+        }
+        if (!/^[0-9a-f]{64}$/.test(passwordHash))
+          issues.push("password_hash 64 ta kichik hex belgidan iborat bo‘lsin");
+        if (issues.length) rejected.push({ rowNumber, reason: issues.join("; ") });
+        else valid.push({ rowNumber, externalId, fullName, className, username, passwordHash });
+      }
+      const existingByExternalId = new Map(
+          state.db.students
+            .map((student) => [String(student.externalId || student.student_id || ""), student])
+            .filter(([key]) => key),
+        ),
+        classNames = new Set(state.db.classes.map((klass) => normalizedLogin(klass.name))),
+        newClasses = [...new Set(valid.map((row) => row.className).filter(Boolean))]
+          .filter((name) => !classNames.has(normalizedLogin(name)))
+          .sort((a, b) => a.localeCompare(b, "uz")),
+        updates = valid.filter((row) => existingByExternalId.has(row.externalId)).length,
+        additions = valid.length - updates,
+        withoutClass = valid.filter((row) => !row.className).length,
+        missingStudents = state.db.students.filter((student) =>
+          !fileIds.has(String(student.externalId || student.student_id || "")),
+        ).length;
+      state.placementPending = {
+        fileName: file.name,
+        total: rows.length - 1,
+        valid,
+        rejected,
+        fileIds: [...fileIds],
+        newClasses,
+        updates,
+        additions,
+        withoutClass,
+        missingStudents,
+      };
+      state.placementOptions = { mustChangePassword: true, archiveMissing: false };
+      render();
+    } catch (error) {
+      state.placementPending = null;
+      render();
+      notify(`CSV fayli o‘qilmadi: ${error.message}`);
+    }
+  }
+  function buildPlacementData(db, pending, options) {
+    const staged = cloneData(db);
+    for (const name of pending.newClasses) {
+      const match = name.match(/^([1-9]|1[01])-([A-Z])$/);
+      if (!match) throw new Error(`Sinf nomi noto‘g‘ri: ${name}`);
+      if (staged.classes.some((klass) => normalizedLogin(klass.name) === normalizedLogin(name))) continue;
+      staged.classes.push({
+        id: id("class"),
+        name,
+        grade: Number(match[1]),
+        section: match[2],
+        teacherId: null,
+      });
+    }
+    let added = 0,
+      updated = 0;
+    for (const row of pending.valid) {
+      const klass = row.className
+          ? staged.classes.find((item) => normalizedLogin(item.name) === normalizedLogin(row.className))
+          : null,
+        existing = staged.students.find((student) =>
+          String(student.externalId || student.student_id || "") === row.externalId,
+        ),
+        values = {
+          externalId: row.externalId,
+          fullName: row.fullName,
+          classId: klass?.id || null,
+          username: row.username,
+          passwordHash: row.passwordHash,
+          archived: false,
+        };
+      if (existing) {
+        Object.assign(existing, values);
+        updated++;
+      } else {
+        staged.students.push({
+          id: id("student"),
+          ...values,
+          mustChangePassword: options.mustChangePassword,
+        });
+        added++;
+      }
+    }
+    if (options.archiveMissing) {
+      const present = new Set(pending.fileIds);
+      for (const student of staged.students)
+        if (!present.has(String(student.externalId || student.student_id || "")))
+          student.archived = true;
+    }
+    staged.importLog = Array.isArray(staged.importLog) ? staged.importLog : [];
+    staged.importLog.push({
+      date: new Date().toISOString(),
+      fileName: pending.fileName,
+      added,
+      updated,
+      rejected: pending.rejected.length,
+      options: { ...options },
+    });
+    syncLoginRegistry(staged, db);
+    return { db: staged, added, updated };
+  }
+  async function savePlacement() {
+    const pending = state.placementPending;
+    if (state.user?.role !== "developer" || !pending) return;
+    try {
+      const { db: staged, added, updated } = buildPlacementData(
+        state.db,
+        pending,
+        state.placementOptions,
+      );
+      validateData(staged);
+      await saveData(staged);
+      state.db = staged;
+      state.placementPending = null;
+      state.view = "classes";
+      render();
+      notify(`${added} ta o‘quvchi qo‘shildi, ${updated} ta yangilandi.`);
+    } catch (error) {
+      notify(`Joylash saqlanmadi: ${error.message}`);
+    }
+  }
+  function placementView() {
+    const pending = state.placementPending;
+    const errors = pending?.rejected || [];
+    return `${pageHead("O‘quvchilarni joylash", "CSV faylidan o‘quvchilarni qo‘shing yoki yangilang.")}<section class="card"><div class="card-head"><div><h3 class="section-title">CSV import</h3><p class="section-sub">Faylni tanlamaguningizcha uning mazmuni o‘qilmaydi.</p></div></div><div class="card-body"><div class="field"><label for="import-placement">CSV faylni tanlash</label><input id="import-placement" type="file" accept=".csv,text/csv"></div></div></section>${pending ? `<section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">${esc(pending.fileName)} · import xulosasi</h3><p class="section-sub">Jami ${pending.total} · To‘g‘ri ${pending.valid.length} · Rad etilgan ${errors.length}</p></div></div><div class="grid grid-4 card-body"><div><b>${pending.newClasses.length}</b><div class="small muted">Yangi sinflar: ${pending.newClasses.length ? pending.newClasses.map(esc).join(", ") : "—"}</div></div><div><b>${pending.additions}</b><div class="small muted">Qo‘shiladigan o‘quvchilar</div></div><div><b>${pending.updates}</b><div class="small muted">Yangilanadigan o‘quvchilar</div></div><div><b>${pending.withoutClass}</b><div class="small muted">Sinfsiz o‘quvchilar · ${pending.missingStudents} ta faylda yo‘q</div></div></div>${errors.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Qator</th><th>Sabab</th></tr></thead><tbody>${errors.map((item) => `<tr><td>${item.rowNumber}</td><td>${esc(item.reason)}</td></tr>`).join("")}</tbody></table></div><div class="card-body"><button class="btn btn-light btn-sm" data-action="download-placement-errors">Xatolarni CSV sifatida yuklab olish</button></div>` : ""}<div class="card-body"><div class="settings-row"><div><b>Yangi o‘quvchilar birinchi kirishda parolni almashtirsin</b></div><label class="toggle"><input id="placement-must-change" type="checkbox" ${state.placementOptions.mustChangePassword ? "checked" : ""}><span></span></label></div><div class="settings-row"><div><b>Faylda yo‘q o‘quvchilarni arxivga o‘tkazish</b><small>Baholar va davomat saqlanadi.</small></div><label class="toggle"><input id="placement-archive-missing" type="checkbox" ${state.placementOptions.archiveMissing ? "checked" : ""}><span></span></label></div><div class="form-actions"><button class="btn btn-teal" data-action="save-placement" ${pending.valid.length ? "" : "disabled"}>Saqlash</button></div></div></section>` : ""}`;
+  }
+  function dataView() {
+    const report = state.importReport
+      ? `<section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">CSV import hisoboti</h3><p class="section-sub">${esc(state.importReport.summary)}</p></div></div><div class="card-body">${state.importReport.errors.length ? `<ul class="small danger-text" style="margin:0;padding-left:19px">${state.importReport.errors.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>` : '<span class="pill pill-present">Xato qator yo‘q</span>'}</div></section>`
+      : "";
+    return `${pageHead("Ma’lumotlar", "Zaxira nusxasini saqlang yoki jadval fayllaridan yozuvlarni olib kiring.")}<div class="grid"><div class="grid grid-2"><section class="card"><div class="card-head"><div><h3 class="section-title">JSON zaxira nusxasi</h3><p class="section-sub">Barcha sozlama, sinf, baho va davomat ma’lumotlari.</p></div></div><div class="card-body"><div class="page-actions"><button class="btn btn-light" data-action="export-json">JSON yuklab olish</button></div></div></section><section class="card"><div class="card-head"><div><h3 class="section-title">CSV jadvallari</h3><p class="section-sub">Baholar yoki davomatni Excel va boshqa jadvallarda oching.</p></div></div><div class="card-body"><div class="page-actions"><button class="btn btn-light" data-action="export-grades-csv">Baholarni CSV</button><button class="btn btn-light" data-action="export-attendance-csv">Davomatni CSV</button></div><div style="height:15px"></div><div class="field"><label for="import-csv">Baholarni CSV dan olib kirish</label><input id="import-csv" type="file" accept=".csv,text/csv"></div><p class="small muted" style="margin:9px 0 0">Ustunlar: student_username, subject, grade, date. Har bir xato qator alohida ko‘rsatiladi.</p></div></section></div>${jsonImportPanel()}${curriculumCsvSection()}${curriculumReportView()}${report}<div class="banner banner-info" style="margin-top:16px"><span>i</span><div><strong>Mahalliy prototip</strong>Ma’lumotlar shu brauzerda saqlanadi. Haqiqiy o‘quvchi ma’lumotlarini kiritmang.</div></div>`;
+  }
+
+  // ===== Student views =====
+  function classRatingsTable(rows, ownClassId) {
+    if (!rows) return '<div class="card-body muted">Bu haftaning sinflar reytingi saqlanmagan.</div>';
+    return '<div class="table-wrap"><table class="table"><thead><tr><th>O‘rin</th><th>Sinf</th><th>O‘quvchilar</th><th>O‘rtacha ball</th></tr></thead><tbody>' + rows.map((row) =>
+      '<tr class="' + (row.classId === ownClassId ? "own-row" : "") + '"><td>' + esc(row.rank) + "</td><td><b>" + esc(row.className) + "</b></td><td>" + esc(row.studentCount) + '</td><td class="score">' + fmt(row.averageScore) + "</td></tr>"
+    ).join("") + "</tbody></table></div>";
+  }
+  function studentRatingContent(student, start) {
+    const schoolRows = ratingsForWeek(start) || [],
+      schoolMine = schoolRows.find((row) => row.studentId === student.id),
+      classRows = student.classId ? classStudentRatingsForWeek(start, student.classId) : [],
+      classMine = classRows.find((row) => row.studentId === student.id),
+      classCount = state.db.students.filter((item) => !item.archived && item.classId === student.classId).length,
+      schoolCount = state.db.students.filter((item) => !item.archived).length,
+      showNames = state.db.settings.showRankingToStudents,
+      rankedClasses = classRatingsForData(state.db, start),
+      ownClassRank = rankedClasses?.find((row) => row.classId === student.classId);
+    const classVisibleRows = showNames
+      ? [...classRows.slice(0, 10), ...(classMine && classMine.rank > 10 ? [classMine] : [])]
+      : classMine ? [classMine] : [];
+    const classTable = classVisibleRows.length
+      ? `<div class="table-wrap"><table class="table"><thead><tr><th>O‘rin</th>${showNames ? "<th>O‘quvchi</th>" : ""}<th>O‘rtacha baho</th><th>Ball</th></tr></thead><tbody>${classVisibleRows.map((row) => `<tr class="${row.studentId === student.id ? "own-row" : ""}"><td>${row.rank}</td>${showNames ? `<td>${esc(row.fullName)}</td>` : ""}<td>${fmt(row.avg)}</td><td class="score">${fmt(row.score)}</td></tr>`).join("")}</tbody></table></div>`
+      : '<div class="card-body muted">—</div>';
+    const classSummary = '<section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">Sinflar reytingi</h3><p class="section-sub">Maktab sinflarining o‘rtacha haftalik bali · Sinfning maktabdagi o‘rni: ' +
+      (ownClassRank ? ownClassRank.rank + " / " + rankedClasses.length : "—") + "</p></div></div>" + classRatingsTable(rankedClasses, student.classId) + "</section>";
+    const schoolTop = showNames
+      ? `<section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">Maktab bo‘yicha Top 10</h3><p class="section-sub">Barcha faol o‘quvchilar</p></div></div><div class="table-wrap"><table class="table"><thead><tr><th>O‘rin</th><th>O‘quvchi</th><th>O‘rtacha baho</th><th>Ball</th></tr></thead><tbody>${schoolRows.slice(0, 10).map((row) => `<tr class="${row.studentId === student.id ? "own-row" : ""}"><td>${row.rank}</td><td>${esc(row.fullName)}</td><td>${fmt(row.avg)}</td><td class="score">${fmt(row.score)}</td></tr>`).join("")}</tbody></table></div></section>`
+      : "";
+    return `<div class="grid grid-3"><div class="card stat"><div class="stat-label">Sinf ichidagi o‘rin</div><div class="stat-value">${classMine ? `${classMine.rank} / ${classCount}` : "—"}</div><div class="stat-note">${esc(classById(student.classId)?.name || "Sinf biriktirilmagan")}</div></div><div class="card stat"><div class="stat-label">Maktab bo‘yicha o‘rin</div><div class="stat-value">${schoolMine ? `${schoolMine.rank} / ${schoolCount}` : "—"}</div><div class="stat-note">barcha faol o‘quvchilar orasida</div></div><div class="callout"><small>Mening balim</small><div class="big">${fmt(schoolMine?.score ?? 0)}</div><p>${weekLabel(start)}</p></div></div><section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">Sinf reytingi</h3><p class="section-sub">${showNames ? "Sinfdagi eng yuqori 10 natija" : "Faqat o‘zingizning natijangiz"}</p></div></div>${classTable}</section>${classSummary}${schoolTop}`;
+  }
+  function studentView() {
+    const st = byStudent(state.user.studentId);
+    if (!st) {
+      logout();
+      notify("O‘quvchi profili topilmadi.");
+      return "";
+    }
+    const tabs = `<div class="class-tabs"><button class="${state.studentTab === "results" ? "active" : ""}" data-action="student-tab" data-tab="results">Natijalarim</button><button class="${state.studentTab === "rating" ? "active" : ""}" data-action="student-tab" data-tab="rating">Reyting</button></div>`;
+    const currentWeek = mondayOf(todayISO());
+    if (state.studentTab === "rating")
+      return `${pageHead("Reyting", "Sinf va maktabdagi o‘rningiz.")}${tabs}${studentRatingContent(st, currentWeek)}`;
+    const start = mondayOf(todayISO()),
+      mine = rankForStudent(start, st.id),
+      classRows = st.classId ? classStudentRatingsForWeek(start, st.classId) : [],
+      classMine = classRows.find((row) => row.studentId === st.id),
+      from = start,
+      to = addDays(start, 6);
+    const attendance = state.db.attendance.filter(
+      (a) => a.studentId === st.id && a.date >= from && a.date <= to,
+    );
+    const excused = attendance.filter((a) => a.status === "excused").length,
+      unexcused = attendance.filter((a) => a.status === "unexcused").length,
+      skipped = attendance.reduce(
+        (n, a) => n + Number(a.skippedLessons || 0),
+        0,
+      );
+    const allGrades = state.db.grades
+      .filter((g) => g.studentId === st.id)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    const groups = state.db.subjects
+      .map((subject) => ({
+        subject,
+        items: allGrades.filter((g) => g.subject === subject),
+      }))
+      .filter((x) => x.items.length);
+    const history = Array.from({ length: 8 }, (_, i) => {
+      const week = addDays(start, -7 * i),
+        r = rankForStudent(week, st.id);
+      return { week, r };
+    }).reverse();
+    const today = todayISO();
+    const weekJourney = `<section class="week-journey card"><div class="card-head"><div><h3 class="section-title">Hafta izi</h3><p class="section-sub">Davomat va har kungi baholar · ${weekLabel(start)}</p></div><span class="journey-count">${WEEKDAYS.length} kun</span></div><ol class="week-path" aria-label="Haftalik davomat va baholar">${WEEKDAYS.map((day, index) => {
+      const date = addDays(start, index),
+        record = attendance.find((item) => item.date === date),
+        gradeCount = allGrades.filter((item) => item.date === date).length;
+      const status = record?.status === "present"
+        ? ["is-present", "✓", "Keldi"]
+        : record?.status === "excused"
+          ? ["is-excused", "!", "Sababli"]
+          : record?.status === "unexcused"
+            ? ["is-unexcused", "×", "Sababsiz"]
+            : date > today
+              ? ["is-upcoming", "·", "Oldinda"]
+              : date === today
+                ? ["is-today", "•", "Bugun"]
+                : ["is-unmarked", "·", "Belgilanmagan"];
+      return `<li class="week-step ${status[0]}"><span class="week-step-mark" aria-hidden="true">${status[1]}</span><strong class="week-step-day">${day.slice(0, 2)}</strong><span class="week-step-status">${status[2]}</span><small>${gradeCount ? `${gradeCount} ta baho` : prettyDate(date)}</small></li>`;
+    }).join("")}</ol></section>`;
+    const top = state.db.settings.showRankingToStudents && classRows.length
+      ? `<section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">Haftaning Top 10 taligi</h3><p class="section-sub">Sinfdagi eng yuqori natijalar</p></div></div>${rankingTable(classRows.slice(0, 10), start, true, true)}</section>`
+      : "";
+    return `${pageHead(`Xush kelibsiz, ${esc(st.fullName.split(" ")[0])}`, "Shu haftadagi natijalaringiz va baholaringiz.")}${tabs}<div class="grid grid-4"><div class="callout"><small>Shu hafta ballingiz</small><div class="big">${fmt(mine?.score ?? 0)}</div><p>${weekLabel(start)}</p></div><div class="card stat" style="--tone:#fff1d0;--tone-ink:#9d7414"><div class="stat-label">Sinfdagi o‘rningiz</div><div class="stat-value">${classMine ? `${classMine.rank}<span style="font-size:14px">-o‘rin</span>` : "—"}</div><div class="stat-note">Reyting bo‘limida batafsil</div><div class="stat-icon">↗</div></div><div class="card stat" style="--tone:#dff2ef;--tone-ink:#087e83"><div class="stat-label">O‘rtacha baho</div><div class="stat-value">${fmt(mine?.avg ?? null)}</div><div class="stat-note">shu haftada kiritilgan</div><div class="stat-icon">▤</div></div><div class="card stat" style="--tone:#e7eff6;--tone-ink:#294c73"><div class="stat-label">Sababsiz kun</div><div class="stat-value">${unexcused}</div><div class="stat-note">shu hafta davomida</div><div class="stat-icon">◷</div></div></div>${weekJourney}<div class="split" style="margin-top:16px"><section class="card"><div class="card-head"><div><h3 class="section-title">Baholaringiz</h3><p class="section-sub">Fanlar va sanalar bo‘yicha</p></div></div><div class="card-body">${groups.length ? groups.map((g) => `<div class="subject-group"><h4>${esc(g.subject)}</h4>${g.items.map((x) => `<span class="grade-chip"><strong class="${Number(x.value) <= 2 ? "grade-low" : ""}">${esc(x.value)}</strong>${prettyDate(x.date)}${x.comment ? ` · ${esc(x.comment)}` : ""}</span>`).join("")}</div>`).join("") : emptyBlock("Hali baho kiritilmagan", "O‘qituvchi baho kiritgach, shu yerda ko‘rinadi.")}</div></section><section class="card"><div class="card-head"><div><h3 class="section-title">Davomat xulosasi</h3><p class="section-sub">${weekLabel(start)}</p></div></div><div class="card-body"><div class="progress-row"><span>Sababli</span><div class="progress"><span style="width:${attendance.length ? Math.min(100, (excused / attendance.length) * 100) : 0}%;background:#d6a92d"></span></div><b>${excused} kun</b></div><div class="progress-row"><span>Sababsiz</span><div class="progress"><span style="width:${attendance.length ? Math.min(100, (unexcused / attendance.length) * 100) : 0}%;background:var(--coral)"></span></div><b>${unexcused} kun</b></div><div class="progress-row"><span>Kirmagan dars</span><div class="progress"><span style="width:${Math.min(100, (skipped / Math.max(1, state.db.settings.lessonsPerDay * 5)) * 100)}%;background:var(--teal)"></span></div><b>${skipped} ta</b></div><div class="note-box" style="margin-top:18px">Sababli kelmagan kunlar reyting ballingizga ta’sir qilmaydi. Darsga kirmagan soatlar esa alohida hisoblanadi.</div></div></section></div></div><section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">So‘nggi 8 hafta</h3><p class="section-sub">Haftalik o‘rin va ballingiz</p></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Hafta</th><th>O‘rin</th><th>O‘rtacha baho</th><th>Ball</th></tr></thead><tbody>${history.map((x) => `<tr><td>${esc(weekLabel(x.week))}</td><td>${x.r?.rank ? `${x.r.rank}-o‘rin` : "—"}</td><td>${fmt(x.r?.avg ?? null)}</td><td class="score">${fmt(x.r?.score ?? null)}</td></tr>`).join("")}</tbody></table></div></section>${top}`;
+  }
+
+  function classScheduleGrid(klass) {
+    const periods = Array.from({ length: Number(state.db.settings.lessonsPerDay) }, (_, i) => i + 1),
+      lessons = state.db.timetable.filter((row) => row.classId === klass.id);
+    return `<div class="table-wrap"><table class="table timetable"><thead><tr><th>Hafta kuni</th>${periods.map((period) => `<th>${period}-dars</th>`).join("")}</tr></thead><tbody>${WEEKDAYS.map((day, index) => `<tr><th class="day-label">${day}</th>${periods.map((period) => {
+      const row = lessons.find((lesson) => lesson.weekday === index + 1 && lesson.lessonNo === period);
+      return `<td class="${row ? "lesson-filled" : "lesson-empty"}">${row ? `${esc(subjectNameById(row.subjectId) || "—")}${row.startTime || row.endTime ? `<div class="small">${esc(row.startTime || "—")}–${esc(row.endTime || "—")}</div>` : ""}` : "—"}</td>`;
+    }).join("")}</tr>`).join("")}</tbody></table></div>`;
+  }
+  function classPageView() {
+    const klass = classById(state.classPageId);
+    if (!klass || (state.user.role === "teacher" && !teacherCanSeeClass(state.user.teacherId, klass.id)))
+      return emptyBlock("Sinf topilmadi", "Bu sinf sahifasini ko‘rish huquqi yo‘q.");
+    const students = state.db.students.filter((student) => !student.archived && student.classId === klass.id),
+      selectedStudent = students.find((student) => student.id === state.classPageStudentId),
+      head = `<div class="page-head"><div><h2>${esc(klass.name)}</h2><p>${klass.grade}-sinf · ${students.length} nafar o‘quvchi</p></div><div class="page-actions"><button class="btn btn-light" data-action="back-to-classes">← Orqaga</button></div></div>`,
+      tabs = `<div class="class-tabs"><button class="${state.classPageTab === "students" ? "active" : ""}" data-action="class-page-tab" data-tab="students">O‘quvchilar</button><button class="${state.classPageTab === "schedule" ? "active" : ""}" data-action="class-page-tab" data-tab="schedule">Dars jadvali</button></div>`;
+    let content = "";
+    if (state.classPageTab === "schedule") {
+      if (state.user.role === "developer") {
+        state.scheduleClassId = klass.id;
+        content = timetableView();
+      } else content = `<section class="card">${classScheduleGrid(klass)}</section>`;
+    } else if (selectedStudent) {
+      const grades = state.db.grades.filter((grade) => grade.studentId === selectedStudent.id),
+        groups = [...new Set(grades.map((grade) => grade.subject))].sort((a, b) => a.localeCompare(b, "uz"));
+      content = `<section class="card"><div class="card-head"><div><h3 class="section-title">${esc(selectedStudent.fullName)}</h3><p class="section-sub">Login: ${esc(selectedStudent.username)}</p></div><button class="btn btn-light btn-sm" data-action="class-student-back">Ro‘yxatga qaytish</button></div><div class="card-body">${groups.length ? groups.map((subject) => `<div class="subject-group"><h4>${esc(subject)}</h4>${grades.filter((grade) => grade.subject === subject).sort((a, b) => b.date.localeCompare(a.date)).map((grade) => `<span class="grade-chip"><strong>${esc(grade.value)}</strong>${prettyDate(grade.date)}${grade.comment ? ` · ${esc(grade.comment)}` : ""}</span>`).join("")}</div>`).join("") : emptyBlock("Hali baho kiritilmagan", "Bu o‘quvchi uchun baholar mavjud emas.")}</div></section>`;
+    } else {
+      const query = transliterate(state.classPageSearch).toLocaleLowerCase("uz");
+      const filtered = students.filter((student) =>
+        !query || transliterate(`${student.fullName} ${student.username}`).toLocaleLowerCase("uz").includes(query),
+      ).sort((a, b) => a.fullName.localeCompare(b.fullName, "uz"));
+      content = `<section class="card"><div class="card-head"><div><h3 class="section-title">O‘quvchilar</h3><p class="section-sub">${filtered.length} nafar o‘quvchi</p></div><form class="filter-row" data-form="class-search"><div class="field"><label for="class-student-search">Ism yoki login</label><input id="class-student-search" name="query" value="${esc(state.classPageSearch)}"></div><button class="btn btn-light btn-sm">Qidirish</button></form></div>${filtered.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>№</th><th>Familiya Ism</th><th>Login</th><th>O‘rtacha baho</th><th>Baholar soni</th></tr></thead><tbody>${filtered.map((student, index) => {
+        const grades = state.db.grades.filter((grade) => grade.studentId === student.id),
+          average = grades.length ? grades.reduce((sum, grade) => sum + Number(grade.value), 0) / grades.length : null;
+        return `<tr><td>${index + 1}</td><td><button class="text-link" data-action="class-student-detail" data-id="${esc(student.id)}">${esc(student.fullName)}</button></td><td class="mono">${esc(student.username)}</td><td>${fmt(average)}</td><td>${grades.length}</td></tr>`;
+      }).join("")}</tbody></table></div>` : emptyBlock("O‘quvchilar topilmadi", "Qidiruv bo‘yicha natija yo‘q.")}</section>`;
+    }
+    return `${head}${tabs}${content}`;
+  }
+
+  // ===== Mapped grade import: drafts stay in memory; only grades and audit metadata persist =====
+  const GRADE_IMPORT_FIELDS = ["studentName", "subject", "value", "date", "className"];
+  const GRADE_IMPORT_EXCEL_ERROR = "Excel kutubxonasi yuklanmadi. Faylni CSV (UTF-8) ko‘rinishida saqlab qayta urinib ko‘ring.";
+  let gradeImportLibraryPromise = null;
+  let gradeImportReadVersion = 0;
+  function normalizeImportName(value) {
+    return transliterate(value).replace(/['‘’ʻʼ\u0060\u00b4\u02b9\u02c8]/gu, "").trim().replace(/\s+/gu, " ");
+  }
+  function importHeaderKey(value) {
+    return normalizeImportName(value).replace(/[^\p{L}\p{N}]/gu, "");
+  }
+  function isPersonalImportHeader(value) {
+    return /pinfl|jshshir|passport|pasport|seriya|raqam|personalid/.test(importHeaderKey(value));
+  }
+  function importClassKey(value) {
+    return normalizeImportName(value).replace(/sinf/gu, "").replace(/[^\p{L}\p{N}]/gu, "");
+  }
+  function guessGradeImportMapping(headers) {
+    const aliases = {
+      studentName: ["ism", "fish", "ismfamiliya", "oquvchiismi", "oquvchi", "fullname", "studentname"],
+      subject: ["fan", "subject"], value: ["baho", "grade"],
+      date: ["sana", "date"], className: ["sinf", "class"],
+    };
+    return Object.fromEntries(GRADE_IMPORT_FIELDS.map((field) => {
+      const header = headers.find((item) => !item.blocked && aliases[field].includes(importHeaderKey(item.label)));
+      return [field, header ? String(header.index) : ""];
+    }));
+  }
+  function parseGradeImportCSV(text) {
+    const input = String(text).replace(/^\uFEFF/, "");
+    let quoted = false, firstRecord = "";
+    for (let i = 0; i < input.length; i++) {
+      if (input[i] === '"') quoted = !quoted;
+      if (!quoted && /[\r\n]/.test(input[i])) break;
+      firstRecord += input[i];
+    }
+    const delimiters = [",", ";", "\t"];
+    const delimiter = delimiters.map((value) => {
+      let count = 0, inside = false;
+      for (const char of firstRecord) {
+        if (char === '"') inside = !inside;
+        else if (!inside && char === value) count++;
+      }
+      return { value, count };
+    }).sort((a, b) => b.count - a.count)[0].value;
+    const rows = [];
+    let row = [], cell = "", inside = false, line = 1, startLine = 1;
+    const finish = () => {
+      row.push(cell);
+      row.rowNumber = startLine;
+      rows.push(row);
+      row = [];
+      cell = "";
+      startLine = line + 1;
+    };
+    for (let i = 0; i < input.length; i++) {
+      const char = input[i];
+      if (inside) {
+        if (char === '"' && input[i + 1] === '"') { cell += '"'; i++; }
+        else if (char === '"') inside = false;
+        else { cell += char; if (char === "\n") line++; }
+      } else if (char === '"') inside = true;
+      else if (char === delimiter) { row.push(cell); cell = ""; }
+      else if (char === "\r" || char === "\n") {
+        if (char === "\r" && input[i + 1] === "\n") i++;
+        finish();
+        line++;
+      } else cell += char;
+    }
+    if (inside) throw new Error("CSV faylida yopilmagan qo‘shtirnoq bor.");
+    if (row.length || cell) finish();
+    return rows;
+  }
+  function createGradeImportDraft(matrix, fileName, options = {}) {
+    const headerIndex = matrix.findIndex((row) => row.some((cell) => String(cell ?? "").trim()));
+    if (headerIndex < 0) throw new Error("Fayl bo‘sh.");
+    const headers = matrix[headerIndex].map((value, index) => {
+      const label = String(value ?? "").trim() || "Ustun " + (index + 1);
+      return { index, label, blocked: isPersonalImportHeader(label) };
+    });
+    const rows = matrix.slice(headerIndex + 1).map((row, index) => row.some((cell) => String(cell ?? "").trim()) ? ({
+      rowNumber: row.rowNumber || headerIndex + index + 2,
+      // Discard ID values before creating even a transient preview.
+      cells: headers.map((header) => header.blocked ? "" : row[header.index] ?? ""),
+    }) : null).filter(Boolean);
+    if (!rows.length) throw new Error("Faylda sarlavha va ma’lumot qatorlari bo‘lishi kerak.");
+    return {
+      fileName: String(fileName || ""), headers, rows,
+      mapping: guessGradeImportMapping(headers),
+      choices: {}, subjectChoices: {}, conflictChoices: {},
+      excel: options.excel === true, date1904: options.date1904 === true,
+    };
+  }
+  function normalizeGradeImportDate(value, options = {}) {
+    if (value && typeof value === "object" && "v" in value) value = value.v;
+    if (Object.prototype.toString.call(value) === "[object Date]") {
+      if (!Number.isFinite(value.getTime())) return null;
+      const iso = [value.getUTCFullYear(), String(value.getUTCMonth() + 1).padStart(2, "0"), String(value.getUTCDate()).padStart(2, "0")].join("-");
+      return isDate(iso) ? iso : null;
+    }
+    if (typeof value === "number" && options.excel) {
+      const days = Math.floor(value);
+      if (!Number.isFinite(value) || days < (options.date1904 ? 0 : 1) || (!options.date1904 && days === 60)) return null;
+      const epoch = options.date1904 ? Date.UTC(1904, 0, 1) : Date.UTC(1899, 11, days < 60 ? 31 : 30);
+      const date = new Date(epoch + days * 86400000);
+      if (!Number.isFinite(date.getTime()) || date.getUTCFullYear() > 9999) return null;
+      return normalizeGradeImportDate(date);
+    }
+    let text = String(value ?? "").trim();
+    const dotted = text.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (dotted) text = dotted[3] + "-" + dotted[2] + "-" + dotted[1];
+    return isDate(text) ? text : null;
+  }
+  function gradeImportAccess(db, user) {
+    if (!user || !["developer", "teacher"].includes(user.role)) return [];
+    if (user.role === "teacher") {
+      const teacher = teacherById(user.teacherId, db);
+      if (!teacher || teacher.active === false) return [];
+    }
+    return visibleStudentsForUser(user, db);
+  }
+  function gradeImportMapping(draft) {
+    const mapping = {}, used = new Set();
+    for (const field of GRADE_IMPORT_FIELDS) {
+      const value = String(draft.mapping?.[field] ?? "");
+      if (value === "" && field === "className") { mapping[field] = ""; continue; }
+      const header = draft.headers.find((item) => String(item.index) === value);
+      if (!header || header.blocked || isPersonalImportHeader(header.label))
+        return { error: "Majburiy ustunlarni tanlang. Shaxsiy ID ustunini tanlash mumkin emas." };
+      if (used.has(value)) return { error: "Har bir maydon uchun alohida ustun tanlang." };
+      used.add(value);
+      mapping[field] = value;
+    }
+    return { mapping };
+  }
+  function buildGradeImportPreview(db, user, draft) {
+    const checked = gradeImportMapping(draft), groups = [], unknownSubjects = [];
+    const summary = { total: draft.rows.length, matched: 0, ambiguous: 0, notFound: 0, invalidGrade: 0, invalidDate: 0, unknownSubject: 0, permissionDenied: 0, added: 0, updated: 0, skipped: 0, rejected: 0 };
+    if (checked.error) return { rows: [], groups, unknownSubjects, summary, ready: false, mappingError: checked.error };
+    if (!user || !["developer", "teacher"].includes(user.role))
+      return { rows: [], groups, unknownSubjects, summary, ready: false, mappingError: "Baholarni import qilish huquqi yo‘q." };
+    const mapping = checked.mapping, students = gradeImportAccess(db, user),
+      names = new Map(), permissionClasses = new Map(), subjects = new Map(db.subjects.map((subject) => [normalizeImportName(subject), subject])),
+      unknown = new Map(), existingGrades = new Map();
+    for (const grade of db.grades) {
+      const key = JSON.stringify([grade.studentId, grade.subject, grade.date]);
+      // Keep all legacy records; any equal value makes this import a duplicate.
+      if (!existingGrades.has(key)) existingGrades.set(key, []);
+      existingGrades.get(key).push({ value: Number(grade.value), id: grade.id });
+    }
+    for (const row of draft.rows) {
+      const name = String(row.cells[Number(mapping.studentName)] ?? "").trim(),
+        normalizedName = normalizeImportName(name),
+        className = mapping.className === "" ? "" : String(row.cells[Number(mapping.className)] ?? "").trim(),
+        key = JSON.stringify([normalizedName, mapping.className === "" ? null : importClassKey(className)]);
+      if (!names.has(key)) {
+        const matchesStudent = (student) => {
+          if (!normalizedName) return false;
+          if (normalizeImportName(student.fullName) !== normalizedName) return false;
+          if (mapping.className === "") return true;
+          const klass = db.classes.find((item) => item.id === student.classId);
+          return !!className && !!klass && [klass.name, klass.id].some((value) => importClassKey(value) === importClassKey(className));
+        };
+        const candidates = students.filter(matchesStudent);
+        // Hidden students are never offered as choices; only classify denied file rows.
+        if (user.role === "teacher") permissionClasses.set(key, (candidates.length ? candidates
+          : db.students.filter((student) => !student.archived && matchesStudent(student))).map((student) => student.classId));
+        const status = candidates.length === 1 ? "MATCHED" : candidates.length > 1 ? "AMBIGUOUS" : "NOT_FOUND";
+        const chosen = candidates.length === 1 ? candidates[0] : candidates.find((student) => student.id === draft.choices?.[key]);
+        const group = { key, name, className, candidates, status, studentId: chosen?.id || "", rowNumbers: [] };
+        names.set(key, group);
+        groups.push(group);
+      }
+      names.get(key).rowNumbers.push(row.rowNumber);
+    }
+    let validMatched = 0;
+    const rows = draft.rows.map((input) => {
+      const name = String(input.cells[Number(mapping.studentName)] ?? "").trim(),
+        className = mapping.className === "" ? "" : String(input.cells[Number(mapping.className)] ?? "").trim(),
+        group = names.get(JSON.stringify([normalizeImportName(name), mapping.className === "" ? null : importClassKey(className)])),
+        subjectText = String(input.cells[Number(mapping.subject)] ?? "").trim(),
+        subjectKey = normalizeImportName(subjectText),
+        originalSubject = subjects.get(subjectKey),
+        decision = draft.subjectChoices?.[subjectKey] || "",
+        subject = originalSubject || (db.subjects.includes(decision) ? decision : ""),
+        gradeText = String(input.cells[Number(mapping.value)] ?? "").trim(),
+        value = Number(gradeText),
+        date = normalizeGradeImportDate(input.cells[Number(mapping.date)], draft),
+        invalidGrade = !gradeText || !/^[+-]?\d+(?:\.0+)?$/.test(gradeText) || !validGradeValue(db, value),
+        reasons = [];
+      const classIds = group.studentId
+        ? [group.candidates.find((student) => student.id === group.studentId).classId]
+        : permissionClasses.get(group.key) || [];
+      const permissionDenied = user.role === "teacher" && !!subject && classIds.length > 0 &&
+        classIds.every((classId) => !teacherCanEditGrade(user.teacherId, classId, subject, db));
+      const row = { rowNumber: input.rowNumber, name, className, groupKey: group.key, status: group.status, studentId: group.studentId, subject, subjectText, value, date, reasons, permissionDenied, action: "skip" };
+      if (permissionDenied) {
+        summary.permissionDenied++;
+        reasons.push("Ruxsat yo‘q: bu fan-sinf juftligi sizga biriktirilmagan. Qator o‘tkazib yuboriladi.");
+      }
+      if (group.studentId) summary.matched++;
+      else if (!permissionDenied && group.status === "AMBIGUOUS") { summary.ambiguous++; reasons.push("Bir xil ismli o‘quvchini tanlang."); }
+      else if (!permissionDenied) { summary.notFound++; reasons.push("O‘quvchi topilmadi yoki sinfga ruxsat yo‘q."); }
+      if (invalidGrade) { summary.invalidGrade++; reasons.push(gradeRangeMessage(db)); }
+      if (!date) { summary.invalidDate++; reasons.push("Sana noto‘g‘ri. YYYY-MM-DD yoki DD.MM.YYYY ko‘rinishida kiriting."); }
+      if (!originalSubject) {
+        if (!unknown.has(subjectKey)) {
+          const item = { key: subjectKey, label: subjectText || "Bo‘sh fan", choice: decision, count: 0 };
+          unknown.set(subjectKey, item);
+          unknownSubjects.push(item);
+        }
+        unknown.get(subjectKey).count++;
+        if (!subject) {
+          summary.unknownSubject++;
+          reasons.push(decision === "__skip__" ? "Noma’lum fan: o‘tkazib yuboriladi." : "Fan ro‘yxatda yo‘q: mavjud fanni tanlang yoki qatorni o‘tkazib yuboring.");
+        }
+      }
+      if (permissionDenied) row.action = "skip";
+      else if (invalidGrade || !date) row.action = "reject";
+      else if (group.studentId && subject) {
+        validMatched++;
+        const key = JSON.stringify([group.studentId, subject, date]), existing = existingGrades.get(key) || [];
+        if (existing.some((grade) => grade.value === value)) {
+          row.duplicate = true;
+          reasons.push("Ayni baho mavjud: o‘tkazib yuboriladi.");
+        } else if (existing.length) {
+          row.conflict = true;
+          row.existingValue = existing[0].value;
+          row.action = draft.conflictChoices?.[String(input.rowNumber)] === "update" ? "update" : "skip";
+          reasons.push("Mavjud baho: " + row.existingValue + "; fayldagi baho: " + value + ".");
+          if (row.action === "update") existing[0].value = value;
+        } else {
+          row.action = "add";
+          existingGrades.set(key, [{ value }]);
+        }
+      }
+      if (row.action === "add") summary.added++;
+      else if (row.action === "update") summary.updated++;
+      else if (row.action === "reject") summary.rejected++;
+      else summary.skipped++;
+      return row;
+    });
+    return { rows, groups, unknownSubjects, summary, mapping, mappingError: "", ready: validMatched > 0 &&
+      !groups.some((group) => group.status === "AMBIGUOUS" && !group.studentId && rows.some((row) => row.groupKey === group.key && !row.permissionDenied)) };
+  }
+  function buildGradeImportData(db, user, draft) {
+    if (!user || !["developer", "teacher"].includes(user.role) ||
+        (user.role === "teacher" && (!teacherById(user.teacherId, db) || teacherById(user.teacherId, db).active === false)))
+      throw new Error("Baholarni import qilish huquqi yo‘q.");
+    const preview = buildGradeImportPreview(db, user, draft);
+    if (!preview.ready) throw new Error(preview.mappingError || "Kamida bitta to‘g‘ri qator va barcha bir xil ismlar uchun tanlov kerak.");
+    const allowed = new Set(gradeImportAccess(db, user).map((student) => student.id)), data = cloneData(db);
+    for (const row of preview.rows) {
+      if (!["add", "update"].includes(row.action)) continue;
+      const student = db.students.find((item) => item.id === row.studentId);
+      if (!student || !allowed.has(row.studentId) ||
+          (user.role === "teacher" && !teacherCanEditGrade(user.teacherId, student.classId, row.subject, db)))
+        throw new Error("Ruxsat yo‘q: bu fan-sinf juftligi sizga biriktirilmagan.");
+      const current = data.grades.find((grade) => grade.studentId === row.studentId && grade.subject === row.subject && grade.date === row.date);
+      if (row.action === "update" && current) { current.value = row.value; current.comment = "Platforma importi"; }
+      else if (!current) data.grades.push({ id: id("grade"), studentId: row.studentId, subject: row.subject, value: row.value, date: row.date, comment: "Platforma importi" });
+    }
+    const mapping = Object.fromEntries(GRADE_IMPORT_FIELDS.map((field) => {
+      const header = draft.headers.find((item) => String(item.index) === preview.mapping[field]);
+      return [field, header && !header.blocked && !isPersonalImportHeader(header.label) ? header.label : null];
+    }));
+    data.importLog = Array.isArray(data.importLog) ? data.importLog : [];
+    data.importLog.push({
+      type: "grades", date: new Date().toISOString(), fileName: draft.fileName,
+      added: preview.summary.added, updated: preview.summary.updated,
+      skipped: preview.summary.skipped, rejected: preview.summary.rejected, mapping,
+      role: user.role, userId: sessionUserId(user),
+    });
+    return { data, preview, added: preview.summary.added, updated: preview.summary.updated, skipped: preview.summary.skipped, rejected: preview.summary.rejected };
+  }
+  async function saveGradeImportDraft(draft, context = { state, saveData }) {
+    const result = buildGradeImportData(context.state.db, context.state.user, draft);
+    await context.saveData(result.data);
+    context.state.db = result.data;
+    return result;
+  }
+  function ensureGradeImportLibrary() {
+    if (window.XLSX) { state.gradeImportLibrary = "ready"; return Promise.resolve(window.XLSX); }
+    if (gradeImportLibraryPromise) return gradeImportLibraryPromise;
+    state.gradeImportLibrary = "loading";
+    gradeImportLibraryPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      let settled = false;
+      const finish = (error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (error) {
+          state.gradeImportLibrary = "failed";
+          gradeImportLibraryPromise = null;
+          script.remove();
+          reject(new Error(GRADE_IMPORT_EXCEL_ERROR));
+        } else { state.gradeImportLibrary = "ready"; resolve(window.XLSX); }
+      };
+      const timer = setTimeout(() => finish(true), 15000);
+      script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+      script.async = true;
+      script.onload = () => finish(!window.XLSX);
+      script.onerror = () => finish(true);
+      document.head.append(script);
+    });
+    return gradeImportLibraryPromise;
+  }
+  async function readGradeImportFile(file) {
+    if (!file || !["developer", "teacher"].includes(state.user?.role)) return;
+    const request = ++gradeImportReadVersion, owner = sessionUserId(state.user);
+    state.gradeImportDraft = null;
+    state.gradeImportError = "";
+    state.gradeImportBusy = true;
+    render();
+    try {
+      let matrix, options = {};
+      if (/\.csv$/i.test(file.name)) matrix = parseGradeImportCSV(await file.text());
+      else if (/\.xlsx$/i.test(file.name)) {
+        const library = await ensureGradeImportLibrary();
+        const workbook = library.read(await file.arrayBuffer(), { type: "array", cellDates: false });
+        if (!workbook.SheetNames.length) throw new Error("Excel faylida varaq topilmadi.");
+        matrix = library.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, range: 0, raw: true, defval: "", blankrows: true });
+        options = { excel: true, date1904: workbook.Workbook?.WBProps?.date1904 === true };
+      } else throw new Error("CSV yoki XLSX faylini tanlang.");
+      const draft = createGradeImportDraft(matrix, file.name, options);
+      if (request === gradeImportReadVersion && state.user && sessionUserId(state.user) === owner) state.gradeImportDraft = draft;
+    } catch (error) {
+      if (request === gradeImportReadVersion) {
+        const expected = [GRADE_IMPORT_EXCEL_ERROR, "CSV faylida yopilmagan qo‘shtirnoq bor.", "Fayl bo‘sh.", "Faylda sarlavha va ma’lumot qatorlari bo‘lishi kerak.", "Excel faylida varaq topilmadi.", "CSV yoki XLSX faylini tanlang."];
+        state.gradeImportError = expected.includes(error.message) ? error.message : "Faylni o‘qib bo‘lmadi. CSV (UTF-8) yoki to‘g‘ri XLSX faylini tanlang.";
+      }
+    } finally {
+      if (request === gradeImportReadVersion) { state.gradeImportBusy = false; render(); }
+    }
+  }
+
+  function gradeImportView() {
+    const draft = state.gradeImportDraft, busy = state.gradeImportBusy;
+    const libraryNote = state.gradeImportLibrary === "failed"
+      ? '<p class="danger-text" role="alert">' + GRADE_IMPORT_EXCEL_ERROR + '</p><button class="btn btn-light btn-sm" data-action="grade-import-retry">Excelni qayta yuklash</button>'
+      : '<p class="small muted" role="status">' + (state.gradeImportLibrary === "loading" ? "Excel kutubxonasi yuklanmoqda…" : "CSV (UTF-8) yoki Excel faylini tanlang.") + '</p>';
+    let content = pageHead("Baholarni import qilish", "Faylni tanlang, ustunlarni moslang va saqlashdan oldin natijalarni tekshiring.") +
+      '<section class="card"><div class="card-head"><div><h3 class="section-title">1. Faylni tanlash</h3><p class="section-sub">Excel faylining birinchi varag‘i o‘qiladi. Fayl tanlanmaguncha ma’lumot o‘qilmaydi.</p></div></div><div class="card-body"><div class="field"><label for="grade-import-file">Baholar fayli</label><input id="grade-import-file" type="file" class="hidden" aria-label="Baholar fayli" accept=".csv,.xlsx" ' + (busy ? "disabled" : "") + '><div class="page-actions"><button class="btn btn-light" type="button" data-action="grade-import-pick" ' + (busy ? "disabled" : "") + '>Faylni tanlash</button><span class="small">' + esc(draft?.fileName || "Fayl tanlanmagan") + '</span></div></div>' + libraryNote +
+      (busy ? '<p role="status">Fayl qayta ishlanmoqda…</p>' : "") +
+      (state.gradeImportError ? '<p class="danger-text" role="alert">' + esc(state.gradeImportError) + "</p>" : "") + "</div></section>";
+    if (draft) {
+      const preview = buildGradeImportPreview(state.db, state.user, draft);
+      const labels = { studentName: "O‘quvchi ismi", subject: "Fan", value: "Baho", date: "Sana", className: "Sinf" };
+      const mappings = GRADE_IMPORT_FIELDS.map((field) => '<div class="field"><label for="grade-import-map-' + field + '">' + labels[field] + (field === "className" ? " (ixtiyoriy)" : " *") +
+        '</label><select id="grade-import-map-' + field + '" data-import-map="' + field + '" ' + (busy ? "disabled" : "") + '><option value="">—</option>' +
+        draft.headers.filter((header) => !header.blocked).map((header) => '<option value="' + header.index + '" ' + (String(draft.mapping[field]) === String(header.index) ? "selected" : "") + ">" + esc(header.label) + " (" + (header.index + 1) + ")</option>").join("") + "</select></div>").join("");
+      const cellText = (cell) => Object.prototype.toString.call(cell) === "[object Date]" ? normalizeGradeImportDate(cell) || "Noto‘g‘ri sana" : String(cell ?? "");
+      content += '<section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">2. Ustunlarni moslash</h3><p class="section-sub">' + esc(draft.fileName) +
+        '</p></div><button class="btn btn-light btn-sm" data-action="grade-import-clear" ' + (busy ? "disabled" : "") + '>Tozalash</button></div><div class="card-body"><div class="form-grid">' + mappings +
+        '</div><p class="small muted">Faqat tanlangan ustunlar baholash uchun ishlatiladi. Shaxsiy ID ustunlari tanlanmaydi va saqlanmaydi.</p>' +
+        (preview.mappingError ? '<p class="danger-text" role="alert">' + esc(preview.mappingError) + "</p>" : "") +
+        '</div><div class="table-wrap"><table class="table"><caption>Sarlavhalar va dastlabki 5 qator</caption><thead><tr><th>Qator</th>' +
+        draft.headers.map((header) => "<th>" + esc(header.label) + (header.blocked ? " · chiqarib tashlangan" : "") + "</th>").join("") + "</tr></thead><tbody>" +
+        draft.rows.slice(0, 5).map((row) => "<tr><td>" + row.rowNumber + "</td>" + draft.headers.map((header) => "<td>" + (header.blocked ? "—" : esc(cellText(row.cells[header.index]))) + "</td>").join("") + "</tr>").join("") +
+        "</tbody></table></div></section>";
+      const counts = [
+        ["Fayldagi qatorlar", preview.summary.total], ["Mos kelgan", preview.summary.matched],
+        ["Tanlov kutilmoqda", preview.summary.ambiguous], ["Topilmagan", preview.summary.notFound],
+        ["Noto‘g‘ri baho", preview.summary.invalidGrade], ["Noto‘g‘ri sana", preview.summary.invalidDate],
+        ["Noma’lum fan", preview.summary.unknownSubject], ["Ruxsat yo‘q", preview.summary.permissionDenied],
+      ];
+      content += '<section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">3. Tekshiruv</h3><p class="section-sub">Ko‘rsatkichlar bir qator uchun bir nechta muammoni ko‘rsatishi mumkin.</p></div></div><div class="card-body"><div class="grid grid-4">' +
+        counts.map(([label, count]) => '<div><span class="small muted">' + label + "</span><p><strong>" + count + "</strong></p></div>").join("") + "</div>" +
+        (preview.summary.permissionDenied ? '<p class="small danger-text" role="status">Ruxsat yo‘q: ' + preview.summary.permissionDenied + " ta qator o‘tkazib yuboriladi. Bu fan-sinf juftliklari sizga biriktirilmagan.</p>" : "");
+      const ambiguous = preview.groups.map((group, index) => ({ group, index })).filter(({ group }) => group.status === "AMBIGUOUS" && preview.rows.some((row) => row.groupKey === group.key && !row.permissionDenied));
+      if (ambiguous.length) content += '<h4>Bir xil ismli o‘quvchilar</h4><p class="small muted">Har bir ism uchun o‘quvchini aniq tanlang.</p><div class="form-grid">' +
+        ambiguous.map(({ group, index }) => '<div class="field"><label for="grade-import-person-' + index + '">' + esc(group.name) + (group.className ? " · " + esc(group.className) : "") +
+          '</label><select id="grade-import-person-' + index + '" data-import-group="' + index + '"><option value="">O‘quvchini tanlang</option>' +
+          group.candidates.map((student) => {
+            const klass = state.db.classes.find((item) => item.id === student.classId);
+            return '<option value="' + esc(student.id) + '" ' + (group.studentId === student.id ? "selected" : "") + ">" + esc(student.fullName + " · " + (klass?.name || "Sinfsiz") + " · " + (student.username || student.id)) + "</option>";
+          }).join("") + "</select></div>").join("") + "</div>";
+      if (preview.unknownSubjects.length) content += '<h4>Noma’lum fanlar</h4><div class="form-grid">' +
+        preview.unknownSubjects.map((item, index) => '<div class="field"><label for="grade-import-subject-' + index + '">' + esc(item.label) + " · " + item.count + ' qator</label><select id="grade-import-subject-' + index + '" data-import-subject="' + index + '"><option value="">Mavjud fanni tanlang</option><option value="__skip__" ' +
+          (item.choice === "__skip__" ? "selected" : "") + ">O‘tkazib yuborish</option>" + state.db.subjects.map((subject) => '<option value="' + esc(subject) + '" ' + (item.choice === subject ? "selected" : "") + ">" + esc(subject) + "</option>").join("") + "</select></div>").join("") + "</div>";
+      content += "</div></section>";
+      const problems = preview.rows.filter((row) => row.reasons.length);
+      if (problems.length) content += '<section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">Muammoli va takror qatorlar</h3><p class="section-sub">Noma’lum fan yoki topilmagan ism saqlanmaydi. Noto‘g‘ri baho va sana rad etiladi.</p></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Qator</th><th>O‘quvchi</th><th>Sabab</th><th>Amal</th></tr></thead><tbody>' +
+        problems.map((row) => "<tr><td>" + row.rowNumber + "</td><td>" + esc(row.name || "Ism bo‘sh") + "</td><td>" + row.reasons.map(esc).join("<br>") + "</td><td>" +
+          (row.permissionDenied ? "Ruxsat yo‘q · o‘tkazib yuboriladi" : row.conflict ? '<label class="small" for="grade-import-conflict-' + row.rowNumber + '">Mavjud baho uchun amal</label><select id="grade-import-conflict-' + row.rowNumber + '" data-import-conflict="' + row.rowNumber + '"><option value="skip">O‘tkazib yuborish</option><option value="update" ' + (row.action === "update" ? "selected" : "") + ">Yangilash</option></select>"
+            : row.action === "reject" ? "Rad etiladi" : row.action === "add" ? "Qo‘shiladi" : "O‘tkazib yuboriladi") + "</td></tr>").join("") + "</tbody></table></div></section>";
+      const valid = preview.rows.filter((row) => row.action === "add" || row.action === "update");
+      if (valid.length) content += '<section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">Saqlanadigan baholar</h3><p class="section-sub">Izoh: Platforma importi</p></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Qator</th><th>O‘quvchi</th><th>Fan</th><th>Baho</th><th>Sana</th><th>Amal</th></tr></thead><tbody>' +
+        valid.map((row) => "<tr><td>" + row.rowNumber + "</td><td>" + esc(state.db.students.find((student) => student.id === row.studentId)?.fullName || row.name) + "</td><td>" + esc(row.subject) + "</td><td>" + row.value + "</td><td>" + esc(row.date) + "</td><td>" + (row.action === "update" ? "Yangilash" : "Qo‘shish") + "</td></tr>").join("") + "</tbody></table></div></section>";
+      content += '<div class="form-actions"><span class="small muted">Qo‘shish: ' + preview.summary.added + " · Yangilash: " + preview.summary.updated + " · O‘tkazish: " + preview.summary.skipped + " · Rad etish: " + preview.summary.rejected +
+        '</span><button class="btn btn-teal" data-action="grade-import-save" ' + (!preview.ready || busy ? "disabled" : "") + ">Tasdiqlab saqlash</button></div>";
+      content += '<dialog id="grade-import-confirm-dialog" class="password-dialog" aria-labelledby="grade-import-confirm-title"><h2 id="grade-import-confirm-title">Importni tasdiqlash</h2><p>' +
+        (preview.summary.added + preview.summary.updated) + " ta baho saqlanadi: " + preview.summary.added + " ta yangi, " + preview.summary.updated + " ta yangilash.</p><p>" +
+        (preview.summary.skipped + preview.summary.rejected) + " ta qator saqlanmaydi: " + preview.summary.skipped + " ta o‘tkazib yuboriladi, " + preview.summary.rejected +
+        ' ta rad etiladi.</p><div class="form-actions"><button class="btn btn-light" type="button" data-action="grade-import-cancel">Bekor qilish</button><button class="btn btn-teal" type="button" data-action="grade-import-confirm">Saqlash</button></div></dialog>';
+    }
+    const log = (state.db.importLog || []).filter((entry) => entry.type === "grades" && (state.user.role === "developer" || entry.userId === sessionUserId(state.user))).slice().reverse();
+    content += '<section class="card" style="margin-top:16px"><div class="card-head"><div><h3 class="section-title">Import tarixi</h3><p class="section-sub">Tasdiqlangan importlar</p></div></div>' +
+      (log.length ? '<div class="table-wrap"><table class="table"><thead><tr><th>Sana</th><th>Fayl</th><th>Qo‘shildi</th><th>Yangilandi</th><th>O‘tkazildi</th><th>Rad etildi</th><th>Ustunlar</th></tr></thead><tbody>' +
+        log.map((entry) => "<tr><td>" + esc(entry.date) + "</td><td>" + esc(entry.fileName) + "</td><td>" + esc(entry.added) + "</td><td>" + esc(entry.updated) + "</td><td>" + esc(entry.skipped) + "</td><td>" + esc(entry.rejected) + "</td><td>" +
+          Object.entries(entry.mapping || {}).map(([field, header]) => esc(({ studentName: "O‘quvchi ismi", subject: "Fan", value: "Baho", date: "Sana", className: "Sinf" })[field] || field) + ": " + esc(header || "—")).join("<br>") + "</td></tr>").join("") + "</tbody></table></div>"
+        : emptyBlock("Hali import yo‘q", "Baholar saqlangach, tarix shu yerda ko‘rinadi.")) + "</section>";
+    return content;
+  }
+
+  // ===== Main rendering =====
+  function loginView(role = "student") {
+    return `<section class="login-panel"><div class="login-card"><form id="login-form" data-form="login"><div class="field"><label for="login-username">Login</label><input id="login-username" name="username" autocomplete="username" aria-label="Login" placeholder="Loginni kiriting" required autofocus></div><div class="field"><label for="login-password">Parol</label><div class="password-input-wrap"><input id="login-password" name="password" type="password" autocomplete="current-password" aria-label="Parol" placeholder="Parolni kiriting" required><button class="password-toggle" type="button" data-action="toggle-password" data-target="login-password" aria-pressed="false">Ko‘rsatish</button></div><small class="login-hint">Parolingizni hech kimga bermang.</small><small class="login-hint hidden" id="caps-lock-note">Caps Lock yoqilgan.</small></div><button class="btn" type="submit">Kirish <span aria-hidden="true">↗</span></button><button class="text-link" type="button" data-action="forgot-password">Parolni unutdingizmi?</button><div class="small" id="forgot-password-note" role="status"></div><div id="login-error" class="small danger-text hidden" role="alert"></div></form></div></section>`;
+  }
+  function passwordChangeView() {
+    return `<section class="login-panel"><div class="login-card"><h2>Parolni yangilash</h2><p>Davom etish uchun yangi parol belgilang.</p><form data-form="force-password-change" novalidate><div class="field"><label for="required-current-password">Joriy parol</label><input id="required-current-password" name="currentPassword" type="password" autocomplete="current-password" required></div><div class="field"><label for="required-new-password">Yangi parol</label><input id="required-new-password" name="newPassword" type="password" autocomplete="new-password" required><div class="small danger-text" data-error-for="newPassword" role="alert"></div></div><div class="field"><label for="required-repeat-password">Yangi parolni takrorlang</label><input id="required-repeat-password" name="repeatPassword" type="password" autocomplete="new-password" required><div class="small danger-text" data-error-for="repeatPassword" role="alert"></div></div><div class="small danger-text" id="change-password-error" role="alert"></div><button class="btn" type="submit">Parolni saqlash</button></form></div></section>`;
+  }
+  async function render() {
+    if (!state.db) {
+      root.innerHTML =
+        '<div class="login-page"><div class="login-panel"><div class="login-card">Yuklanmoqda…</div></div></div>';
+      return;
+    }
+    if (!state.user) {
+      state.loginRole = loginRoleFromHash(window.location.hash, state.loginRole);
+      const loginSide = `<section class="login-side"><div class="login-brand"><div class="brand-mark">S</div><div><strong>Sinf daftari</strong><small>Haftalik o‘sish jurnali</small></div></div><div class="login-hero"><h1>Har bir hafta — yangi imkon.</h1><p>Baholar, davomat va sinfdagi o‘sish bitta sodda daftarda.</p><div class="hero-lines"><i></i><i></i><i></i></div></div><div class="login-foot">O‘qituvchi va o‘quvchilar uchun sinf jurnali</div></section>`;
+      root.innerHTML = `<div class="login-page">${loginSide}${loginView(state.loginRole)}</div>`;
+      const passwordInput = document.getElementById("login-password");
+      passwordInput?.addEventListener("keyup", (event) => {
+        document.getElementById("caps-lock-note")?.classList.toggle("hidden", !event.getModifierState("CapsLock"));
+      });
+      passwordInput?.addEventListener("keydown", (event) => {
+        document.getElementById("caps-lock-note")?.classList.toggle("hidden", !event.getModifierState("CapsLock"));
+      });
+      return;
+    }
+    if (state.passwordChangeRequired) {
+      const loginSide = `<section class="login-side"><div class="login-brand"><div class="brand-mark">S</div><div><strong>Sinf daftari</strong><small>Haftalik o‘sish jurnali</small></div></div><div class="login-hero"><h1>Har bir hafta — yangi imkon.</h1><p>Baholar, davomat va sinfdagi o‘sish bitta sodda daftarda.</p><div class="hero-lines"><i></i><i></i><i></i></div></div><div class="login-foot">O‘qituvchi va o‘quvchilar uchun sinf jurnali</div></section>`;
+      root.innerHTML = `<div class="login-page">${loginSide}${passwordChangeView()}</div>`;
+      return;
+    }
+    const developer = state.user.role === "developer",
+      teacher = state.user.role === "teacher",
+      student = state.user.role === "student";
+    const gradeImportRoute = window.location.hash === "#/import/baholar";
+    if (gradeImportRoute && student) {
+      state.view = "student";
+      history.replaceState(null, "", "#/student");
+    }
+    const classRoute = window.location.hash.match(/^#\/(teacher|developer)\/sinf\/([^/]+)$/);
+    const placementRoute = window.location.hash === "#/developer/joylash";
+    if (placementRoute && !developer) {
+      root.innerHTML = shell(
+        emptyBlock("Ruxsat yo‘q", "Bu bo‘lim faqat dasturchi uchun."),
+        "O‘quvchilarni joylash",
+      );
+      return;
+    }
+    if (gradeImportRoute && (developer || teacher)) {
+      state.view = "grade-import";
+    } else if (placementRoute) {
+      state.view = "placement";
+    } else if (classRoute) {
+      let classId = "";
+      try { classId = decodeURIComponent(classRoute[2]); } catch { classId = ""; }
+      const routeAllowed =
+        (classRoute[1] === "developer" && developer) ||
+        (classRoute[1] === "teacher" && teacher && teacherCanSeeClass(state.user.teacherId, classId));
+      if (!routeAllowed || !classById(classId)) {
+        root.innerHTML = shell(
+          emptyBlock("Sinf topilmadi", "Bu sinf sahifasini ko‘rish huquqi yo‘q."),
+          "Sinflar",
+        );
+        return;
+      }
+      state.classPageId = classId;
+      state.view = "class-page";
+    } else if (state.view === "grade-import") {
+      state.view = developer || teacher ? "overview" : "student";
+    } else if (state.view === "class-page") {
+      state.view = developer || teacher ? "classes" : "student";
+    }
+    if (teacher) {
+      const account = teacherById(state.user.teacherId),
+        noAssignments = !(account?.assignments || []).length &&
+          !state.db.classes.some((klass) => klass.teacherId === state.user.teacherId);
+      if (noAssignments && state.view !== "grade-import") {
+        root.innerHTML = shell(
+          emptyBlock("Hali biriktirma yo‘q", "Sizga hali sinf yoki fan biriktirilmagan. Developer bilan bog‘laning."),
+          "Bosh sahifa",
+        );
+        return;
+      }
+    }
+    const views = developer
+      ? {
+          overview: developerOverviewView,
+          classes: classesView,
+          "class-page": classPageView,
+          teachers: teacherView,
+          students: studentsView,
+          placement: placementView,
+          "grade-import": gradeImportView,
+          rating: ratingView,
+          subjects: subjectsView,
+          curriculum: curriculumView,
+          schedule: timetableView,
+          data: dataView,
+          databases: databasesView,
+        }
+      : teacher
+        ? {
+            overview: overviewView,
+            classes: teacherClassesView,
+            "class-page": classPageView,
+            students: studentsView,
+            attendance: attendanceView,
+            grades: gradesView,
+            "grade-import": gradeImportView,
+            rating: ratingView,
+            schedule: timetableView,
+            curriculum: curriculumView,
+            settings: settingsView,
+          }
+        : {
+            student: studentView,
+            schedule: timetableView,
+            curriculum: curriculumView,
+          };
+    const titles = {
+      overview: developer ? "Dasturchi oynasi" : "Umumiy ko‘rinish",
+      classes: "Sinflar",
+      "class-page": "Sinf ma’lumoti",
+      placement: "O‘quvchilarni joylash",
+      teachers: "O‘qituvchilar",
+      subjects: "Fanlar",
+      curriculum: "O‘quv reja",
+      schedule: "Dars jadvali",
+      students: "O‘quvchilar",
+      attendance: "Davomat",
+      grades: "Baholar",
+      "grade-import": "Baholarni import qilish",
+      rating: "Haftalik reyting",
+      settings: "Sozlamalar",
+      data: "Ma’lumotlar",
+      databases: "Bazalar",
+      student: "O‘quvchi paneli",
+    };
+    if (!views[state.view])
+      state.view = developer || teacher ? "overview" : "student";
+    const subtitle =
+      student && state.view === "student"
+        ? "Shaxsiy natijalaringiz"
+        : developer
+          ? "Sinflar, fanlar va o‘quv jarayoni sozlamalari"
+          : undefined;
+    root.innerHTML = shell(
+      views[state.view](),
+      titles[state.view] || titles.overview,
+      subtitle || "Sinfingizdagi o‘quv va davomat jarayoni",
+    );
+    if (state.view === "teachers" && state.temporaryPassword)
+      queueMicrotask(() => document.getElementById("teacher-password-dialog")?.showModal());
+    if (state.view === "grade-import" && state.gradeImportLibrary === "idle")
+      ensureGradeImportLibrary().catch(() => {}).finally(() => {
+        if (window.location.hash === "#/import/baholar" && ["developer", "teacher"].includes(state.user?.role)) render();
+      });
+  }
+
+  // ===== Form handling =====
+  async function appendStudentRecord(db, { fullName, username, password, classId }) {
+    const student = {
+      id: id("student"),
+      fullName,
+      username,
+      passwordHash: await Storage.hashPassword(password),
+      classId,
+      mustChangePassword: true,
+      archived: false,
+    };
+    db.students.push(student);
+    return student;
+  }
+  async function handleSubmit(event) {
+    event.preventDefault();
+    const form = event.target,
+      kind = form.dataset.form;
+    if (!kind) return;
+    const fd = new FormData(form);
+    if (kind === "database-search") {
+      if (state.user?.role !== "developer") return;
+      state.databaseSearch = String(fd.get("query") || "");
+      state.databasePage = 0;
+      render();
+      return;
+    }
+    if (kind === "force-password-change") {
+      const current = String(fd.get("currentPassword") || ""),
+        next = String(fd.get("newPassword") || ""),
+        repeat = String(fd.get("repeatPassword") || ""),
+        setError = (name, message) => {
+          const target = document.querySelector(`[data-error-for="${name}"]`);
+          if (target) target.textContent = message;
+        };
+      setError("newPassword", "");
+      setError("repeatPassword", "");
+      const rule = validateNewPassword(next, state.user.fullName, state.user.username);
+      if (rule) {
+        setError("newPassword", rule);
+        return;
+      }
+      if (next !== repeat) {
+        setError("repeatPassword", "Parollar bir xil emas.");
+        return;
+      }
+      let record, currentHash;
+      if (state.user.role === "student") {
+        record = byStudent(state.user.studentId);
+        currentHash = record?.passwordHash;
+      } else if (state.user.role === "teacher") {
+        record = state.db.teachers.find((teacher) => teacher.id === state.user.teacherId);
+        currentHash = record?.passwordHash;
+      }
+      if (!record || !(await passwordMatches(current, currentHash))) {
+        document.getElementById("change-password-error").textContent = "Joriy parol noto‘g‘ri.";
+        return;
+      }
+      record.passwordHash = await Storage.hashPassword(next);
+      invalidateUserSessions(record);
+      record.mustChangePassword = false;
+      if (state.user.role === "teacher" && record.id === state.db.teachers[0]?.id)
+        state.db.auth.teacherPasswordHash = record.passwordHash;
+      await saveData(state.db);
+      state.passwordChangeRequired = false;
+      saveSession();
+      render();
+      notify("Parol yangilandi.");
+      return;
+    }
+    if (kind === "login") {
+      const ok = await login(
+        String(fd.get("username") || ""),
+        String(fd.get("password") || ""),
+      );
+      if (!ok) {
+        const error = document.getElementById("login-error");
+        if (error) {
+          error.textContent = "Login yoki parol noto‘g‘ri.";
+          error.classList.add("danger-text");
+          error.setAttribute("role", "alert");
+          error.classList.remove("hidden");
+        }
+        document.getElementById("login-password")?.select();
+      }
+      return;
+    }
+    if (kind === "teacher") {
+      if (state.user?.role !== "developer") {
+        notify("Bu amal faqat dasturchi oynasida mumkin.");
+        return;
+      }
+      const editId = state.editTeacherId || "",
+        current = state.db.teachers.find((teacher) => teacher.id === editId),
+        label = String(fd.get("label") || "").trim(),
+        loginName = String(fd.get("login") || "").trim(),
+        fullName = String(fd.get("fullName") || "").trim(),
+        classTeacherId = String(fd.get("classTeacherId") || ""),
+        formEl = event.target,
+        rows = [...formEl.querySelectorAll("[data-assignment-row]")].map((row) => {
+          const key = row.dataset.assignmentRow;
+          return {
+            subjectId: String(fd.get(`subject-${key}`) || ""),
+            classIds: fd.getAll(`class-${key}`).map(String),
+          };
+        });
+      if (!label || !loginName) {
+        notify("Yorliq va loginni kiriting.");
+        return;
+      }
+      if (!/^[\p{L}\p{N}._-]{2,32}$/u.test(loginName)) {
+        notify("Login 2–32 belgi bo‘lsin; harf, raqam, nuqta, chiziqcha yoki pastki chiziq ishlating.");
+        return;
+      }
+      if (loginTaken(state.db, loginName, "teacher", editId)) {
+        notify("Bu login oldin berilgan va band qoladi. Boshqa login tanlang.");
+        return;
+      }
+      const usableRows = rows.filter((row) => row.subjectId || row.classIds.length);
+      if (usableRows.some((row) => !row.subjectId || !row.classIds.length)) {
+        notify("Fan va kamida bitta sinf tanlang.");
+        return;
+      }
+      if (usableRows.some((row) => row.classIds.some((classId) =>
+        !eligibleClassesForSubject(row.subjectId).some((klass) => klass.id === classId),
+      ))) {
+        notify("Tanlangan fan sinf o‘quv rejasida yo‘q.");
+        return;
+      }
+      let tempPassword = "",
+        passwordHash = current?.passwordHash || "";
+      if (!current) {
+        tempPassword = generateTemporaryPassword(label, loginName);
+        passwordHash = await Storage.hashPassword(tempPassword);
+      }
+      const staged = cloneData(state.db),
+        teacher = staged.teachers.find((item) => item.id === editId) || {
+          id: id("teacher"),
+          active: true,
+          mustChangePassword: true,
+          assignments: [],
+        };
+      if (!current) staged.teachers.push(teacher);
+      teacher.label = label;
+      teacher.login = loginName;
+      teacher.fullName = fullName || label;
+      teacher.passwordHash = passwordHash;
+      teacher.active = teacher.active !== false;
+      teacher.assignments = [];
+      const priorClass = staged.classes.find((klass) => klass.teacherId === teacher.id);
+      if (priorClass && priorClass.id !== classTeacherId) {
+        const cleared = setClassTeacher(staged, priorClass.id, null, true);
+        if (!cleared.ok) {
+          notify(cleared.message);
+          return;
+        }
+        Object.assign(staged, cleared.db);
+      }
+      if (classTeacherId) {
+        let result = setClassTeacher(staged, classTeacherId, teacher.id);
+        if (!result.ok && result.message === "Bu sinfda allaqachon sinf rahbari bor. Almashtirilsinmi?" && confirm(result.message))
+          result = setClassTeacher(staged, classTeacherId, teacher.id, true);
+        if (!result.ok) {
+          notify(result.message);
+          return;
+        }
+        Object.assign(staged, result.db);
+      }
+      for (const row of usableRows)
+        for (const classId of row.classIds) {
+          const result = addAssignment(staged, teacher.id, classId, row.subjectId);
+          if (!result.ok) {
+            notify(result.message);
+            return;
+          }
+          Object.assign(staged, result.db);
+        }
+      if (teacher.id === staged.teachers[0]?.id) {
+        staged.auth.teacherUsername = teacher.login;
+        staged.auth.teacherPasswordHash = teacher.passwordHash;
+      }
+      try {
+        await saveData(staged);
+        state.db = staged;
+        state.teacherFormOpen = false;
+        state.editTeacherId = null;
+        state.teacherDraft = null;
+        if (tempPassword) state.temporaryPassword = { value: tempPassword, teacherId: teacher.id };
+        render();
+        notify(current ? "O‘qituvchi ma’lumoti saqlandi." : "O‘qituvchi qo‘shildi.");
+      } catch (error) {
+        notify(`O‘qituvchini saqlab bo‘lmadi: ${error.message}`);
+      }
+      return;
+    }
+    if (
+      ["class", "subject", "curriculum", "timetable"].includes(kind) &&
+      state.user?.role !== "developer"
+    ) {
+      notify("Bu amal faqat dasturchi oynasida mumkin.");
+      return;
+    }
+    if (kind === "class") {
+      const editId = String(fd.get("id") || ""),
+        rawSection = String(fd.get("section") || "").trim(),
+        grade = Number(fd.get("grade")),
+        section = normalizeSectionInput(rawSection, grade),
+        existing = classById(editId);
+      if (
+        !rawSection ||
+        !Number.isInteger(grade) ||
+        grade < 1 ||
+        grade > 11 ||
+        !section ||
+        section.length > 10
+      ) {
+        notify("Daraja va harf yoki nomni tekshiring.");
+        return;
+      }
+      if (editId && !existing) {
+        notify("Sinf topilmadi.");
+        return;
+      }
+      if (classNameExists(state.db, grade, section, editId)) {
+        notify("Bu sinf allaqachon mavjud");
+        return;
+      }
+      let message = "";
+      if (existing) {
+        existing.name = `${grade}-${section}`;
+        existing.grade = grade;
+        existing.section = section;
+        message = "Sinf ma’lumoti saqlandi.";
+      } else {
+        const created = {
+          id: id("class"),
+          name: `${grade}-${section}`,
+          grade,
+          section,
+        };
+        state.db.classes.push(created);
+        state.scheduleClassId = created.id;
+        message = "Yangi sinf qo‘shildi.";
+        if (fd.get("autoTimetable") === "on") {
+          const generated = generatedRowsForClass(created);
+          if (generated.error) message += ` ${generated.error}.`;
+          else {
+            state.db.timetable.push(...generated.rows);
+            message += ` Jadvaldagi ${generated.rows.length} ta dars avtomatik tuzildi.${generated.warning ? ` ${generated.warning}.` : ""}`;
+          }
+        }
+      }
+      await saveData(state.db);
+      state.classFormOpen = false;
+      state.editClassId = null;
+      render();
+      notify(message);
+      return;
+    }
+    if (kind === "subject") {
+      const oldName = String(fd.get("oldName") || ""),
+        name = String(fd.get("name") || "").trim();
+      if (!name) {
+        notify("Fan nomini kiriting.");
+        return;
+      }
+      if (
+        state.db.subjects.some(
+          (subject) =>
+            subject !== oldName &&
+            subject.toLocaleLowerCase("uz") === name.toLocaleLowerCase("uz"),
+        )
+      ) {
+        notify("Bu fan nomi allaqachon mavjud.");
+        return;
+      }
+      if (oldName) {
+        const index = state.db.subjects.indexOf(oldName);
+        if (index < 0) {
+          notify("Fan topilmadi.");
+          return;
+        }
+        const oldId = subjectIdForName(oldName),
+          newId = subjectIdForName(name);
+        state.db.subjects[index] = name;
+        state.db.grades.forEach((g) => {
+          if (g.subject === oldName) g.subject = name;
+        });
+        state.db.curriculum.forEach((row) => {
+          if (row.subjectId === oldId) row.subjectId = newId;
+        });
+        state.db.timetable.forEach((row) => {
+          if (row.subjectId === oldId) row.subjectId = newId;
+        });
+        if (state.gradeSubject === oldName) state.gradeSubject = name;
+      } else state.db.subjects.push(name);
+      await saveData(state.db);
+      state.editSubject = null;
+      state.subjectFormOpen = false;
+      render();
+      notify(
+        oldName
+          ? "Fan nomi bog‘langan yozuvlarda ham yangilandi."
+          : "Fan qo‘shildi.",
+      );
+      return;
+    }
+    if (kind === "curriculum") {
+      const next = [],
+        oldRows = state.db.curriculum;
+      for (const subject of state.db.subjects)
+        for (const grade of GRADES) {
+          const sid = subjectIdForName(subject),
+            checked = fd.get(`curr__${sid}__${grade}`) === "on",
+            hoursText = String(fd.get(`hours__${sid}__${grade}`) || "").trim(),
+            hours = hoursText === "" ? null : Number(hoursText);
+          if (
+            hoursText !== "" &&
+            (!Number.isInteger(hours) || hours < 0 || hours > 12)
+          ) {
+            notify(
+              `${subject}, ${grade}-sinf: haftalik soat bo‘sh yoki 0–12 oralig‘idagi butun son bo‘lsin.`,
+            );
+            return;
+          }
+          if (checked) {
+            const previous = oldRows.find(
+              (row) => row.grade === grade && row.subjectId === sid,
+            );
+            next.push({
+              id: previous?.id || id("curriculum"),
+              grade,
+              subjectId: sid,
+              weeklyHours: hours,
+            });
+          }
+        }
+      state.db.curriculum = next;
+      state.db.curriculumConfirmed = true;
+      await saveData(state.db);
+      render();
+      notify("O‘quv reja saqlandi. Taxminiy belgi olib tashlandi.");
+      return;
+    }
+    if (kind === "timetable") {
+      const classId = String(form.dataset.classId || ""),
+        klass = classById(classId);
+      if (!klass) {
+        notify("Tanlangan sinf topilmadi.");
+        return;
+      }
+      const periods = Number(state.db.settings.lessonsPerDay || 7),
+        kept = state.db.timetable.filter(
+          (row) => row.classId !== classId || row.lessonNo > periods,
+        ),
+        next = [];
+      for (let weekday = 1; weekday <= WEEKDAYS.length; weekday++)
+        for (let lessonNo = 1; lessonNo <= periods; lessonNo++) {
+          const choice = String(
+              fd.get(`lesson__${weekday}__${lessonNo}`) || "__remove__",
+            ).trim(),
+            prior = state.db.timetable.find(
+              (row) =>
+                row.classId === classId &&
+                row.weekday === weekday &&
+                row.lessonNo === lessonNo,
+            ),
+            startTime = String(fd.get(`start__${weekday}__${lessonNo}`) || ""),
+            endTime = String(fd.get(`end__${weekday}__${lessonNo}`) || "");
+          if (
+            (startTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)) ||
+            (endTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(endTime))
+          ) {
+            notify("Dars boshlanishi yoki tugash vaqtini tekshiring.");
+            return;
+          }
+          if (choice === "__remove__") continue;
+          if (choice === "__keep__") {
+            if (prior) next.push({ ...prior, startTime, endTime });
+            continue;
+          }
+          if (!curriculumAllows(klass.grade, choice)) {
+            notify(
+              "Bu fan tanlangan darajaning o‘quv rejasida yo‘q. Saqlash uchun shu darajadagi fanni tanlang.",
+            );
+            return;
+          }
+          next.push({
+            id: prior?.id || id("lesson"),
+            classId,
+            weekday,
+            lessonNo,
+            subjectId: choice,
+            startTime,
+            endTime,
+          });
+        }
+      const classRows = [
+          ...kept.filter((row) => row.classId === classId),
+          ...next,
+        ],
+        duplicateDays = [];
+      for (let weekday = 1; weekday <= 6; weekday++) {
+        const counts = new Map();
+        for (const row of classRows.filter((item) => item.weekday === weekday))
+          counts.set(row.subjectId, (counts.get(row.subjectId) || 0) + 1);
+        const duplicated = [...counts]
+          .filter(([, count]) => count > 1)
+          .map(([subjectId]) => subjectNameById(subjectId) || subjectId);
+        if (duplicated.length)
+          duplicateDays.push(
+            `${WEEKDAYS[weekday - 1]}: ${duplicated.join(", ")}`,
+          );
+      }
+      state.db.timetable = [...kept, ...next];
+      await saveData(state.db);
+      state.scheduleEditMode = false;
+      render();
+      notify(
+        duplicateDays.length
+          ? `Jadval saqlandi. Ogohlantirish: bir kunda takrorlangan fanlar — ${duplicateDays.join("; ")}.`
+          : "Jadval saqlandi.",
+      );
+      return;
+    }
+    if (kind === "student") {
+      const fullName = String(fd.get("fullName") || "").trim(),
+        username = String(fd.get("username") || "").trim(),
+        password = String(fd.get("password") || ""),
+        classId = String(fd.get("classId") || "");
+      const editId = String(fd.get("id") || "");
+      if (!fullName || !username || !classId || !classById(classId)) {
+        notify("Ism-familiya, login va sinfni to‘ldiring.");
+        return;
+      }
+      if (!["teacher", "developer"].includes(state.user?.role)) {
+        notify("O‘quvchini boshqarish huquqi yo‘q.");
+        return;
+      }
+      const existing = byStudent(editId),
+        permitted = state.user.role === "developer" ||
+          teacherCanManageStudents(state.user.teacherId, classId);
+      if (!permitted || (existing && state.user.role === "teacher" && !teacherCanManageStudents(state.user.teacherId, existing.classId))) {
+        notify("Faqat sizga biriktirilgan sinf o‘quvchilarini boshqarishingiz mumkin.");
+        return;
+      }
+      const loginError = studentLoginError(state.db, fullName, username, existing);
+      if (loginError) {
+        notify(loginError);
+        return;
+      }
+      if (!editId && !password) {
+        notify("O‘quvchi uchun parol kiriting.");
+        return;
+      }
+      if (editId && !existing) {
+        notify("O‘quvchi topilmadi.");
+        return;
+      }
+      if (password) {
+        const passwordError = validateNewPassword(password, fullName, username);
+        if (passwordError) {
+          notify(passwordError);
+          return;
+        }
+      }
+      const staged = cloneData(state.db);
+      let s = staged.students.find((student) => student.id === editId);
+      if (s) {
+        s.fullName = fullName;
+        s.username = username;
+        s.classId = classId;
+        if (password) {
+          s.passwordHash = await Storage.hashPassword(password);
+          invalidateUserSessions(s);
+          s.mustChangePassword = true;
+        }
+      } else {
+        s = await appendStudentRecord(staged, { fullName, username, password, classId });
+      }
+      await saveData(staged);
+      state.db = staged;
+      state.studentFormOpen = false;
+      state.editStudentId = null;
+      render();
+      notify(editId ? "O‘quvchi ma’lumoti yangilandi." : "O‘quvchi qo‘shildi.");
+      return;
+    }
+    if (kind === "attendance") {
+      const date = state.attendanceDate,
+        classId = String(fd.get("classId") || ""),
+        students = state.db.students.filter(
+          (student) => !student.archived && student.classId === classId,
+        );
+      if (!teacherCanEditAttendance(state.user.teacherId, classId)) {
+        notify("Davomatni faqat o‘z sinfining sinf rahbari tahrirlaydi.");
+        return;
+      }
+      if (!isDate(date)) {
+        notify("Sanani tekshiring.");
+        return;
+      }
+      for (const student of students) {
+        const status = String(fd.get(`status-${student.id}`) || "present"),
+          raw = fd.get(`skipped-${student.id}`),
+          skipped = Number(raw || 0);
+        if (
+          !["present", "excused", "unexcused"].includes(status) ||
+          !Number.isInteger(skipped) ||
+          skipped < 0 ||
+          skipped > state.db.settings.lessonsPerDay
+        ) {
+          notify(
+            `${student.fullName}: davomat yoki kirmagan darslar sonini tekshiring.`,
+          );
+          return;
+        }
+      }
+      for (const student of students) {
+        const status = String(fd.get(`status-${student.id}`) || "present"),
+          skipped = Number(fd.get(`skipped-${student.id}`) || 0);
+        let rec = state.db.attendance.find(
+          (a) => a.studentId === student.id && a.date === date,
+        );
+        if (!rec) {
+          rec = {
+            studentId: student.id,
+            date,
+            status,
+            skippedLessons: skipped,
+          };
+          state.db.attendance.push(rec);
+        } else {
+          rec.status = status;
+          rec.skippedLessons = skipped;
+        }
+      }
+      await saveData(state.db);
+      render();
+      notify("Davomat saqlandi.");
+      return;
+    }
+    if (kind === "quick-grades") {
+      const date = state.gradeDate,
+        subject = state.gradeSubject,
+        classId = String(fd.get("classId") || ""),
+        students = state.db.students.filter(
+          (student) => !student.archived && student.classId === classId,
+        );
+      if (
+        !teacherCanSeeClass(state.user.teacherId, classId) ||
+        !teacherCanEditGrade(state.user.teacherId, classId, subject)
+      ) {
+        notify("Sizga bu sinf va fan uchun baho kiritish huquqi berilmagan.");
+        return;
+      }
+      if (!isDate(date)) {
+        notify("Sanani tekshiring.");
+        return;
+      }
+      const values = [];
+      for (const student of students) {
+        const raw = String(fd.get(`grade-${student.id}`) || "").trim();
+        if (raw === "") {
+          values.push({
+            student,
+            raw: "",
+            comment: String(fd.get(`comment-${student.id}`) || "").trim(),
+          });
+          continue;
+        }
+        const val = Number(raw);
+        if (
+          !Number.isInteger(val) ||
+          val < state.db.settings.gradeMin ||
+          val > state.db.settings.gradeMax
+        ) {
+          notify(gradeRangeMessage());
+          return;
+        }
+        values.push({
+          student,
+          raw: val,
+          comment: String(fd.get(`comment-${student.id}`) || "").trim(),
+        });
+      }
+      for (const v of values) {
+        if (v.raw === "") continue;
+        const existing = state.db.grades.find(
+          (g) =>
+            g.studentId === v.student.id &&
+            g.subject === subject &&
+            g.date === date,
+        );
+        if (existing) {
+          existing.value = v.raw;
+          existing.comment = v.comment;
+        } else
+          state.db.grades.push({
+            id: id("grade"),
+            studentId: v.student.id,
+            subject,
+            value: v.raw,
+            date,
+            comment: v.comment,
+          });
+      }
+      await saveData(state.db);
+      render();
+      notify("Baholar saqlandi.");
+      return;
+    }
+    if (kind === "grade-filter") {
+      state.gradeFilters = {
+        student: String(fd.get("student") || ""),
+        subject: String(fd.get("subject") || ""),
+        from: String(fd.get("from") || ""),
+        to: String(fd.get("to") || ""),
+      };
+      if (
+        (state.gradeFilters.from && !isDate(state.gradeFilters.from)) ||
+        (state.gradeFilters.to && !isDate(state.gradeFilters.to)) ||
+        (state.gradeFilters.from &&
+          state.gradeFilters.to &&
+          state.gradeFilters.from > state.gradeFilters.to)
+      ) {
+        notify("Sana oralig‘ini to‘g‘ri tanlang.");
+        return;
+      }
+      render();
+      return;
+    }
+    if (kind === "class-search") {
+      state.classPageSearch = String(fd.get("query") || "").trim();
+      render();
+      return;
+    }
+    if (kind === "edit-grade") {
+      const g = state.db.grades.find((x) => x.id === fd.get("id")),
+        value = Number(fd.get("value")),
+        date = String(fd.get("date") || ""),
+        subject = String(fd.get("subject") || ""),
+        targetStudent = byStudent(String(fd.get("studentId"))),
+        targetClassId = targetStudent?.classId;
+      if (
+        !g ||
+        !targetStudent ||
+        !visibleStudentsForUser().some((student) => student.id === targetStudent.id) ||
+        !isDate(date) ||
+        !state.db.subjects.includes(subject) ||
+        !validGradeValue(state.db, value) ||
+        !teacherCanEditGrade(state.user.teacherId, targetClassId, subject)
+      ) {
+        notify(!validGradeValue(state.db, value) ? gradeRangeMessage() : "Bu sinf va fan uchun bahoni tahrirlash huquqi yo‘q.");
+        return;
+      }
+      g.studentId = String(fd.get("studentId"));
+      g.subject = subject;
+      g.date = date;
+      g.value = value;
+      g.comment = String(fd.get("comment") || "").trim();
+      await saveData(state.db);
+      state.editGradeId = null;
+      render();
+      notify("Baho yangilandi.");
+      return;
+    }
+    if (kind === "settings") {
+      const avg = Number(fd.get("avgMultiplier")),
+        unexcused = Number(fd.get("unexcusedAbsencePenalty")),
+        skipped = Number(fd.get("skippedLessonPenalty")),
+        min = Number(fd.get("gradeMin")),
+        max = Number(fd.get("gradeMax")),
+        lessons = Number(fd.get("lessonsPerDay"));
+      if (
+        ![avg, unexcused, skipped].every(
+          (n) => Number.isFinite(n) && n >= 0 && n <= 100,
+        ) ||
+        !Number.isInteger(min) ||
+        !Number.isInteger(max) ||
+        min < 1 ||
+        max > 10 ||
+        min >= max ||
+        !Number.isInteger(lessons) ||
+        lessons < 1 ||
+        lessons > 20
+      ) {
+        notify(
+          "Sozlama qiymatlarini tekshiring. Baho oralig‘i 1–10 ichida bo‘lsin.",
+        );
+        return;
+      }
+      state.db.settings.weights = {
+        avgMultiplier: avg,
+        unexcusedAbsencePenalty: unexcused,
+        skippedLessonPenalty: skipped,
+      };
+      state.db.settings.gradeMin = min;
+      state.db.settings.gradeMax = max;
+      state.db.settings.lessonsPerDay = lessons;
+      state.db.settings.showRankingToStudents =
+        fd.get("showRankingToStudents") === "on";
+      await saveData(state.db);
+      render();
+      notify("Sozlamalar saqlandi.");
+      return;
+    }
+    if (kind === "teacher-password") {
+      const old = String(fd.get("oldPassword") || ""),
+        next = String(fd.get("newPassword") || ""),
+        confirm = String(fd.get("confirmPassword") || ""),
+        currentTeacher = teacherById(state.user.teacherId);
+      if (!currentTeacher || !(await passwordMatches(old, currentTeacher.passwordHash))) {
+        notify("Joriy parol noto‘g‘ri.");
+        return;
+      }
+      const passwordError = validateNewPassword(
+        next,
+        currentTeacher.fullName,
+        currentTeacher.login,
+      );
+      if (passwordError) {
+        notify(passwordError);
+        return;
+      }
+      if (next !== confirm) {
+        notify("Parollar bir xil emas.");
+        return;
+      }
+      const staged = cloneData(state.db),
+        teacher = staged.teachers.find((item) => item.id === currentTeacher.id);
+      teacher.passwordHash = await Storage.hashPassword(next);
+      invalidateUserSessions(teacher);
+      if (teacher.id === staged.teachers[0]?.id)
+        staged.auth.teacherPasswordHash = teacher.passwordHash;
+      await saveData(staged);
+      state.db = staged;
+      saveSession();
+      render();
+      notify("O‘qituvchi paroli yangilandi.");
+      return;
+    }
+  }
+
+  // ===== Data tools =====
+  function validateData(d) {
+    if (
+      !d ||
+      d.version !== 1 ||
+      !d.settings ||
+      !d.settings.weights ||
+      !d.auth || typeof d.auth !== "object" || Array.isArray(d.auth)
+    )
+      throw new Error(
+        "JSON versiyasi yoki auth/settings bo‘limlari noto‘g‘ri.",
+      );
+    for (const role of ["teacher", "developer"]) {
+      const username = d.auth[`${role}Username`], passwordHash = d.auth[`${role}PasswordHash`];
+      if (passwordHash && (typeof username !== "string" || !username.trim() ||
+          !/^([a-f0-9]{64})$/i.test(passwordHash)))
+        throw new Error("Hisobning kirish ma’lumotlari noto‘g‘ri.");
+    }
+    for (const key of [
+      "classes",
+      "students",
+      "subjects",
+      "attendance",
+      "grades",
+      "weeklySnapshots",
+      "curriculum",
+      "timetable",
+      "teachers",
+    ])
+      if (!Array.isArray(d[key])) throw new Error(`${key} ro‘yxati topilmadi.`);
+    if (typeof d.curriculumConfirmed !== "boolean")
+      throw new Error("O‘quv reja holati noto‘g‘ri.");
+    const w = d.settings.weights,
+      min = Number(d.settings.gradeMin),
+      max = Number(d.settings.gradeMax),
+      lessons = Number(d.settings.lessonsPerDay);
+    if (
+      ![
+        "avgMultiplier",
+        "unexcusedAbsencePenalty",
+        "skippedLessonPenalty",
+      ].every(
+        (k) =>
+          Number.isFinite(Number(w[k])) &&
+          Number(w[k]) >= 0 &&
+          Number(w[k]) <= 100,
+      ) ||
+      !Number.isInteger(min) ||
+      !Number.isInteger(max) ||
+      min < 1 ||
+      max > 10 ||
+      min >= max ||
+      !Number.isInteger(lessons) ||
+      lessons < 1 ||
+      lessons > 20 ||
+      typeof d.settings.showRankingToStudents !== "boolean"
+    )
+      throw new Error(
+        "Reyting, baho oralig‘i yoki dars sozlamalari noto‘g‘ri.",
+      );
+    if (
+      !d.classes.length ||
+      !d.subjects.length ||
+      new Set(d.subjects).size !== d.subjects.length ||
+      d.subjects.some((s) => typeof s !== "string" || !s.trim())
+    )
+      throw new Error(
+        "Kamida bitta sinf va takrorlanmagan fanlar bo‘lishi kerak.",
+      );
+    const classIds = new Set();
+    const teacherIds = new Set(d.teachers.map((teacher) => teacher.id));
+    const classTeacherIds = new Set();
+    for (const c of d.classes) {
+      if (
+        !c.id ||
+        !c.name?.trim() ||
+        !Number.isInteger(Number(c.grade)) ||
+        Number(c.grade) < 1 ||
+        Number(c.grade) > 11 ||
+        typeof c.section !== "string" ||
+        !c.section.trim() ||
+        classIds.has(c.id)
+      )
+        throw new Error("Sinf yozuvi noto‘g‘ri yoki takrorlangan.");
+      classIds.add(c.id);
+      if (c.teacherId) {
+        if (!teacherIds.has(c.teacherId) || classTeacherIds.has(c.teacherId))
+          throw new Error("Sinf rahbari bir nechta sinfga biriktirilgan.");
+        classTeacherIds.add(c.teacherId);
+      }
+    }
+    const usernames = new Set(
+        [d.auth.teacherUsername, d.auth.developerUsername].filter(Boolean).map(normalizedLogin),
+      ),
+      studentIds = new Set();
+    const teacherLogins = new Set(),
+      assignmentPairs = new Set();
+    for (const teacher of d.teachers) {
+      const login = normalizedLogin(teacher.login);
+      if (!teacher.id || !teacher.label?.trim() || !login || teacherLogins.has(login))
+        throw new Error("O‘qituvchi yozuvi noto‘g‘ri yoki login takrorlangan.");
+      teacherLogins.add(login);
+      const legacyMatch = teacher.id === d.teachers[0]?.id &&
+        login === normalizedLogin(d.auth.teacherUsername);
+      if (usernames.has(login) && !legacyMatch)
+        throw new Error(`Takrorlangan login: ${teacher.login}`);
+      usernames.add(login);
+      if (teacher.passwordHash && !/^([a-f0-9]{64})$/i.test(teacher.passwordHash))
+        throw new Error("O‘qituvchi parol xeshi noto‘g‘ri.");
+      if (!Array.isArray(teacher.assignments))
+        throw new Error("O‘qituvchi fan biriktirmalari noto‘g‘ri.");
+      const assignmentKeys = new Set();
+      for (const assignment of teacher.assignments) {
+        const klass = d.classes.find((item) => item.id === assignment.classId),
+          key = `${assignment.classId}|${assignment.subjectId}`;
+        if (
+          !klass ||
+          !d.curriculum.some((row) => Number(row.grade) === Number(klass.grade) && row.subjectId === assignment.subjectId) ||
+          assignmentKeys.has(key) ||
+          assignmentPairs.has(key)
+        ) throw new Error("O‘qituvchi fan biriktirmasi noto‘g‘ri yoki takrorlangan.");
+        assignmentKeys.add(key);
+        assignmentPairs.add(key);
+      }
+    }
+    for (const s of d.students) {
+      if (
+        !s.id ||
+        studentIds.has(s.id) ||
+        !s.fullName?.trim() ||
+        !s.username?.trim() ||
+        !/^([a-f0-9]{64})$/i.test(s.passwordHash || "")
+      )
+        throw new Error("O‘quvchi yozuvi yoki parol xeshi noto‘g‘ri.");
+      const u = normalizedLogin(s.username);
+      if (usernames.has(u))
+        throw new Error(`Takrorlangan login: ${s.username}`);
+      usernames.add(u);
+      studentIds.add(s.id);
+    }
+    for (const s of d.students)
+      if (s.classId != null && !classIds.has(s.classId))
+        throw new Error(`${s.fullName} uchun sinf topilmadi.`);
+    const attendanceKeys = new Set();
+    for (const a of d.attendance) {
+      const key = `${a.studentId}|${a.date}`;
+      if (
+        !studentIds.has(a.studentId) ||
+        !isDate(a.date) ||
+        !["present", "excused", "unexcused"].includes(a.status) ||
+        !Number.isInteger(Number(a.skippedLessons)) ||
+        Number(a.skippedLessons) < 0 ||
+        Number(a.skippedLessons) > lessons ||
+        attendanceKeys.has(key)
+      )
+        throw new Error(
+          "Davomat qatorlaridan biri noto‘g‘ri yoki takrorlangan.",
+        );
+      attendanceKeys.add(key);
+    }
+    const gradeKeys = new Set(),
+      gradeIds = new Set();
+    for (const g of d.grades) {
+      const key = `${g.studentId}|${g.subject}|${g.date}`,
+        value = Number(g.value);
+      if (
+        !g.id ||
+        gradeIds.has(g.id) ||
+        !studentIds.has(g.studentId) ||
+        !d.subjects.includes(g.subject) ||
+        !isDate(g.date) ||
+        !Number.isInteger(value) ||
+        value < 1 ||
+        value > 10 ||
+        gradeKeys.has(key)
+      )
+        throw new Error("Baho qatorlaridan biri noto‘g‘ri yoki takrorlangan.");
+      gradeIds.add(g.id);
+      gradeKeys.add(key);
+    }
+    const curriculumKeys = new Set();
+    for (const row of d.curriculum) {
+      const key = `${row.grade}|${row.subjectId}`;
+      if (
+        !row.id ||
+        !Number.isInteger(Number(row.grade)) ||
+        Number(row.grade) < 1 ||
+        Number(row.grade) > 11 ||
+        !d.subjects.some((name) => subjectIdForName(name) === row.subjectId) ||
+        (row.weeklyHours !== null &&
+          (!Number.isInteger(Number(row.weeklyHours)) ||
+            Number(row.weeklyHours) < 0 ||
+            Number(row.weeklyHours) > 12)) ||
+        curriculumKeys.has(key)
+      )
+        throw new Error(
+          "O‘quv reja qatorlaridan biri noto‘g‘ri yoki takrorlangan.",
+        );
+      curriculumKeys.add(key);
+    }
+    const lessonKeys = new Set(),
+      lessonIds = new Set();
+    for (const row of d.timetable) {
+      const weekday = Number(row.weekday),
+        lessonNo = Number(row.lessonNo),
+        key = `${row.classId}|${weekday}|${lessonNo}`,
+        validTime = (value) =>
+          value === "" || /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+      if (
+        !row.id ||
+        lessonIds.has(row.id) ||
+        !classIds.has(row.classId) ||
+        !Number.isInteger(weekday) ||
+        weekday < 1 ||
+        weekday > 6 ||
+        !Number.isInteger(lessonNo) ||
+        lessonNo < 1 ||
+        lessonNo > 20 ||
+        typeof row.startTime !== "string" ||
+        typeof row.endTime !== "string" ||
+        !validTime(row.startTime) ||
+        !validTime(row.endTime) ||
+        !d.subjects.some((name) => subjectIdForName(name) === row.subjectId) ||
+        lessonKeys.has(key)
+      )
+        throw new Error(
+          "Dars jadvali qatorlaridan biri noto‘g‘ri yoki takrorlangan.",
+        );
+      lessonIds.add(row.id);
+      lessonKeys.add(key);
+    }
+    const snapshotWeeks = new Set();
+    for (const snapshot of d.weeklySnapshots) {
+      if (
+        !isDate(snapshot.weekStart) ||
+        mondayOf(snapshot.weekStart) !== snapshot.weekStart ||
+        !snapshot.closedAt ||
+        !Number.isFinite(Date.parse(snapshot.closedAt)) ||
+        !Array.isArray(snapshot.ratings) ||
+        snapshotWeeks.has(snapshot.weekStart)
+      )
+        throw new Error("Haftalik yopilgan natijalardan biri noto‘g‘ri.");
+      snapshotWeeks.add(snapshot.weekStart);
+      for (const r of snapshot.ratings)
+        if (
+          !r.studentId ||
+          !r.fullName ||
+          !Number.isInteger(r.rank) ||
+          r.rank < 1 ||
+          !Number.isFinite(Number(r.score)) ||
+          (r.avg !== null && !Number.isFinite(Number(r.avg))) ||
+          !Number.isInteger(Number(r.unexcusedDays)) ||
+          !Number.isInteger(Number(r.skipped))
+        )
+          throw new Error("Yopilgan reyting qatorlaridan biri noto‘g‘ri.");
+    }
+    return d;
+  }
+  const JSON_IMPORT_KEYS = [
+    "classes",
+    "students",
+    "subjects",
+    "curriculum",
+    "schedule",
+    "grades",
+    "attendance",
+  ];
+  function hashImportedPassword(password) {
+    if (!globalThis.crypto?.subtle?.digest)
+      throw new Error("Bu brauzerda xavfsiz parol xeshlash mavjud emas.");
+    return globalThis.crypto.subtle
+      .digest("SHA-256", new TextEncoder().encode(String(password)))
+      .then((digest) =>
+        Array.from(new Uint8Array(digest), (byte) =>
+          byte.toString(16).padStart(2, "0"),
+        ).join(""),
+      );
+  }
+  async function importJSON(file) {
+    try {
+      if (state.user?.role !== "developer")
+        throw new Error("JSON import faqat dasturchi oynasida mumkin.");
+      const parsed = JSON.parse(await file.text());
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+        throw new Error("JSON faylida obyekt bo‘lishi kerak.");
+      const has = (key) => Object.prototype.hasOwnProperty.call(parsed, key),
+        keys = JSON_IMPORT_KEYS.filter((key) => has(key) && key !== "schedule");
+      if (has("schedule") || (!has("schedule") && has("timetable")))
+        keys.push("schedule");
+      if (!keys.length)
+        throw new Error("Qo‘llab-quvvatlanadigan bo‘lim topilmadi.");
+      const pending = {
+        fileName: String(file.name || "JSON"),
+        keys,
+        rows: {},
+        loginRegistry: parsed.loginRegistry || [],
+      };
+      if (!Array.isArray(pending.loginRegistry)) throw new Error("loginRegistry bo‘limi massiv bo‘lishi kerak.");
+      for (const key of keys) {
+        const sourceKey =
+            key === "schedule"
+              ? has("schedule")
+                ? "schedule"
+                : "timetable"
+              : key,
+          values = parsed[sourceKey];
+        if (!Array.isArray(values))
+          throw new Error(`${sourceKey} bo‘limi massiv bo‘lishi kerak.`);
+        pending.rows[key] = [];
+        for (let index = 0; index < values.length; index++) {
+          const raw = values[index];
+          if (key === "students") {
+            if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+              pending.rows[key].push({
+                index: index + 1,
+                error: "O‘quvchi yozuvi obyekt bo‘lishi kerak.",
+              });
+              continue;
+            }
+            const { password, ...safe } = raw;
+            let error = "";
+            if (safe.passwordHash == null && password !== undefined) {
+              if (typeof password !== "string")
+                error = "Ochiq parol matn bo‘lishi kerak.";
+              else
+                try {
+                  safe.passwordHash = await hashImportedPassword(password);
+                } catch (e) {
+                  error = e.message;
+                }
+            }
+            pending.rows[key].push({
+              index: index + 1,
+              data: safe,
+              error,
+            });
+          } else pending.rows[key].push({ index: index + 1, data: raw });
+        }
+      }
+      state.jsonImportPending = pending;
+      state.jsonImportMode = "";
+      state.jsonImportPreview = null;
+      state.jsonImportReport = null;
+      render();
+      notify("JSON fayli tekshirish uchun tayyorlandi. Amalni tanlang.");
+    } catch (e) {
+      state.jsonImportPending = null;
+      state.jsonImportMode = "";
+      state.jsonImportPreview = null;
+      render();
+      notify(`JSON import amalga oshmadi: ${e.message}`);
+    }
+  }
+  function jsonImportIdentity(key, row) {
+    if (key === "classes")
+      return `${Number(row.grade)}|${String(row.name || "")
+        .trim()
+        .toLocaleLowerCase("uz")}`;
+    if (key === "students")
+      return String(row.username || "")
+        .trim()
+        .toLocaleLowerCase("uz");
+    if (key === "subjects")
+      return String(row || "")
+        .trim()
+        .toLocaleLowerCase("uz");
+    if (key === "curriculum") return `${Number(row.grade)}|${row.subjectId}`;
+    if (key === "schedule")
+      return `${row.classId}|${Number(row.weekday)}|${Number(row.lessonNo)}`;
+    if (key === "grades") return `${row.studentId}|${row.subject}|${row.date}`;
+    if (key === "attendance") return `${row.studentId}|${row.date}`;
+    return "";
+  }
+  function findJSONImportMatch(list, key, row) {
+    const identity = jsonImportIdentity(key, row);
+    return list.find(
+      (item) =>
+        (row.id && item.id === row.id) ||
+        jsonImportIdentity(key, item) === identity,
+    );
+  }
+  function buildJSONImportPlan(pending, mode) {
+    const data = JSON.parse(JSON.stringify(state.db)),
+      report = {
+        added: 0,
+        updated: 0,
+        rejected: 0,
+        errors: [],
+        ready: true,
+        mode,
+        keys: [...pending.keys],
+      },
+      reject = (key, index, reason) => {
+        report.rejected++;
+        report.errors.push(`${key}, qator ${index}: ${reason}`);
+      },
+      properties = { schedule: "timetable" },
+      seen = Object.fromEntries(pending.keys.map((key) => [key, new Set()])),
+      classAliases = new Map(),
+      studentAliases = new Map(),
+      subjectAliases = new Map();
+    const prop = (key) => properties[key] || key;
+    for (const entry of pending.rows.subjects || []) {
+      const subject = entry.data;
+      if (subject && typeof subject === "object" && subject.id && subject.name)
+        subjectAliases.set(String(subject.id), subjectIdForName(subject.name));
+    }
+    for (const key of pending.keys)
+      data[prop(key)] =
+        mode === "replace"
+          ? []
+          : JSON.parse(JSON.stringify(state.db[prop(key)] || []));
+    const subjectNameFromId = (value) => {
+      const raw = String(value || ""),
+        resolved = subjectAliases.get(raw) || raw;
+      return (
+        data.subjects.find((name) => subjectIdForName(name) === resolved) || ""
+      );
+    };
+    const resolveSubject = (value) => {
+      const name = subjectNameFromId(value);
+      if (!name) throw new Error("subjectId fanlar ro‘yxatida topilmadi.");
+      return subjectIdForName(name);
+    };
+    const apply = (key, index, row) => {
+      const target = data[prop(key)],
+        base = state.db[prop(key)] || [],
+        targetMatch = findJSONImportMatch(target, key, row),
+        baseMatch = findJSONImportMatch(base, key, row),
+        match = targetMatch || baseMatch,
+        identity = jsonImportIdentity(key, row),
+        tokens = [`row:${identity}`, ...(row.id ? [`id:${row.id}`] : [])];
+      if (tokens.some((token) => seen[key].has(token)))
+        throw new Error("Bir xil yozuv faylda takrorlangan.");
+      if (identity === "|" || identity === "")
+        throw new Error(
+          "Yozuvni aniqlash uchun kerakli maydonlar yetishmaydi.",
+        );
+      for (const token of tokens) seen[key].add(token);
+      const next = { ...(targetMatch || baseMatch || {}), ...row };
+      if (key !== "attendance")
+        next.id =
+          (targetMatch || baseMatch)?.id ||
+          row.id ||
+          id(
+            key === "schedule"
+              ? "lesson"
+              : key === "grades"
+                ? "grade"
+                : key === "students"
+                  ? "student"
+                  : key === "classes"
+                    ? "class"
+                    : "curriculum",
+          );
+      if (key === "classes") {
+        const conflict = target.find(
+          (item) =>
+            item.id !== (targetMatch || baseMatch)?.id &&
+            Number(item.grade) === Number(next.grade) &&
+            String(item.name).trim().toLocaleLowerCase("uz") ===
+              String(next.name).trim().toLocaleLowerCase("uz"),
+        );
+        if (conflict)
+          throw new Error("Shu darajada bu sinf nomi allaqachon mavjud.");
+      }
+      if (key === "students") {
+        const username = String(next.username || "")
+          .trim()
+          .toLocaleLowerCase("uz");
+        if (
+          target.some(
+            (item) =>
+              item.id !== (targetMatch || baseMatch)?.id &&
+              String(item.username || "")
+                .trim()
+                .toLocaleLowerCase("uz") === username,
+          )
+        )
+          throw new Error("Foydalanuvchi nomi takrorlangan.");
+        if (
+          username ===
+            String(data.auth.teacherUsername).toLocaleLowerCase("uz") ||
+          username ===
+            String(data.auth.developerUsername).toLocaleLowerCase("uz")
+        )
+          throw new Error("Foydalanuvchi nomi boshqa hisobda ishlatilmoqda.");
+      }
+      if (targetMatch) {
+        target[target.indexOf(targetMatch)] = next;
+      } else target.push(next);
+      if (baseMatch) report.updated++;
+      else report.added++;
+      return next;
+    };
+    for (const key of pending.keys) {
+      for (const entry of pending.rows[key] || []) {
+        const index = entry.index;
+        if (entry.error) {
+          reject(key, index, entry.error);
+          continue;
+        }
+        try {
+          const raw = entry.data;
+          if (key === "subjects") {
+            const name = String(
+              typeof raw === "string" ? raw : raw?.name || "",
+            ).trim();
+            if (!name) throw new Error("Fan nomi bo‘sh bo‘lmasligi kerak.");
+            const identity = name.toLocaleLowerCase("uz");
+            if (seen[key].has(`row:${identity}`))
+              throw new Error("Fan nomi faylda takrorlangan.");
+            seen[key].add(`row:${identity}`);
+            const existing = data.subjects.find(
+                (item) => String(item).toLocaleLowerCase("uz") === identity,
+              ),
+              original = state.db.subjects.find(
+                (item) => String(item).toLocaleLowerCase("uz") === identity,
+              );
+            if (mode === "merge") {
+              if (existing) report.updated++;
+              else {
+                data.subjects.push(name);
+                report.added++;
+              }
+            } else {
+              data.subjects.push(name);
+              if (original) report.updated++;
+              else report.added++;
+            }
+            continue;
+          }
+          if (!raw || typeof raw !== "object" || Array.isArray(raw))
+            throw new Error("Yozuv obyekt bo‘lishi kerak.");
+          let row = { ...raw };
+          if (key === "classes") {
+            const base = mode === "replace" ? state.db.classes : data.classes,
+              matching = findJSONImportMatch(base, "classes", row),
+              parsed = parseClassIdentity(row.name),
+              grade = Number(row.grade ?? parsed?.grade ?? matching?.grade),
+              section = String(
+                row.section || parsed?.section || matching?.section || "",
+              ).trim(),
+              name = String(
+                row.name ||
+                  (Number.isInteger(grade) && section
+                    ? `${grade}-${section}`
+                    : matching?.name || ""),
+              ).trim();
+            if (!Number.isInteger(grade) || grade < 1 || grade > 11)
+              throw new Error(
+                "Daraja 1–11 oralig‘idagi butun son bo‘lishi kerak.",
+              );
+            if (!name || !section)
+              throw new Error("Sinf nomi va harfi bo‘sh bo‘lmasligi kerak.");
+            row = { ...row, grade, name, section };
+            const result = apply(key, index, row);
+            if (raw.id) classAliases.set(String(raw.id), result.id);
+            continue;
+          }
+          if (key === "students") {
+            const base = mode === "replace" ? state.db.students : data.students,
+              matching = findJSONImportMatch(base, "students", row);
+            row = {
+              ...row,
+              username: String(row.username ?? matching?.username ?? "").trim(),
+              fullName: String(row.fullName ?? matching?.fullName ?? "").trim(),
+              classId: row.classId ?? matching?.classId,
+            };
+            if (!row.username || !row.fullName)
+              throw new Error("Foydalanuvchi nomi va ism-familiya kerak.");
+            const loginError = studentLoginError(data, row.fullName, row.username, matching);
+            if (loginError) throw new Error(loginError);
+            if (row.classId)
+              row.classId =
+                classAliases.get(String(row.classId)) || row.classId;
+            const found = data.classes.some((item) => item.id === row.classId);
+            if (!found) throw new Error("Sinf topilmadi.");
+            if (!row.passwordHash && matching?.passwordHash)
+              row.passwordHash = matching.passwordHash;
+            if (!/^([a-f0-9]{64})$/i.test(String(row.passwordHash || "")))
+              throw new Error("Parol xeshi yo‘q yoki noto‘g‘ri.");
+            const result = apply(key, index, row);
+            if (raw.id) studentAliases.set(String(raw.id), result.id);
+            continue;
+          }
+          if (key === "curriculum") {
+            const grade = Number(row.grade),
+              hours =
+                row.weeklyHours === "" || row.weeklyHours == null
+                  ? null
+                  : Number(row.weeklyHours);
+            if (!Number.isInteger(grade) || grade < 1 || grade > 11)
+              throw new Error(
+                "Daraja 1–11 oralig‘idagi butun son bo‘lishi kerak.",
+              );
+            if (
+              (!Number.isInteger(hours) && hours !== null) ||
+              (hours !== null && (hours < 0 || hours > 12))
+            )
+              throw new Error(
+                "Haftalik soat bo‘sh yoki 0–12 oralig‘idagi butun son bo‘lishi kerak.",
+              );
+            row = {
+              ...row,
+              grade,
+              subjectId: resolveSubject(row.subjectId),
+              weeklyHours: hours,
+            };
+            apply(key, index, row);
+            continue;
+          }
+          if (key === "schedule") {
+            const weekday = Number(row.weekday ?? row.day),
+              lessonNo = Number(row.lessonNo ?? row.lesson);
+            row = {
+              ...row,
+              classId: classAliases.get(String(row.classId)) || row.classId,
+              weekday,
+              lessonNo,
+              subjectId: resolveSubject(row.subjectId),
+              startTime: String(row.startTime || ""),
+              endTime: String(row.endTime || ""),
+            };
+            if (!data.classes.some((item) => item.id === row.classId))
+              throw new Error("Sinf topilmadi.");
+            if (
+              !Number.isInteger(weekday) ||
+              weekday < 1 ||
+              weekday > 6 ||
+              !Number.isInteger(lessonNo) ||
+              lessonNo < 1 ||
+              lessonNo > 20
+            )
+              throw new Error(
+                "Hafta kuni 1–6, dars raqami 1–20 bo‘lishi kerak.",
+              );
+            const validTime = (value) =>
+              value === "" || /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+            if (!validTime(row.startTime) || !validTime(row.endTime))
+              throw new Error("Dars vaqti HH:MM formatida bo‘lishi kerak.");
+            apply(key, index, row);
+            continue;
+          }
+          if (key === "grades") {
+            row = {
+              ...row,
+              studentId:
+                studentAliases.get(String(row.studentId)) || row.studentId,
+            };
+            if (!data.students.some((item) => item.id === row.studentId))
+              throw new Error("O‘quvchi topilmadi.");
+            if (Object.prototype.hasOwnProperty.call(row, "subjectId")) {
+              const subjectId = resolveSubject(row.subjectId),
+                name = subjectNameFromId(subjectId);
+              if (
+                row.subject &&
+                String(row.subject).toLocaleLowerCase("uz") !==
+                  name.toLocaleLowerCase("uz")
+              )
+                throw new Error("Fan nomi va subjectId mos emas.");
+              row.subject = name;
+              row.subjectId = subjectId;
+            } else {
+              const name = data.subjects.find(
+                (item) =>
+                  String(item).toLocaleLowerCase("uz") ===
+                  String(row.subject || "")
+                    .trim()
+                    .toLocaleLowerCase("uz"),
+              );
+              if (!name)
+                throw new Error("Baho fani fanlar ro‘yxatida topilmadi.");
+              row.subject = name;
+            }
+            row.value = Number(row.value);
+            if (
+              !isDate(row.date) ||
+              !validGradeValue(data, row.value)
+            )
+              throw new Error(
+                validGradeValue(data, row.value)
+                  ? "Baho sanasi noto‘g‘ri."
+                  : gradeRangeMessage(data),
+              );
+            apply(key, index, row);
+            continue;
+          }
+          if (key === "attendance") {
+            row = {
+              ...row,
+              studentId:
+                studentAliases.get(String(row.studentId)) || row.studentId,
+              skippedLessons: Number(row.skippedLessons || 0),
+            };
+            if (!data.students.some((item) => item.id === row.studentId))
+              throw new Error("O‘quvchi topilmadi.");
+            if (
+              !isDate(row.date) ||
+              !["present", "excused", "unexcused"].includes(row.status) ||
+              !Number.isInteger(row.skippedLessons) ||
+              row.skippedLessons < 0 ||
+              row.skippedLessons > Number(data.settings.lessonsPerDay)
+            )
+              throw new Error(
+                "Davomat holati, sanasi yoki darslar soni noto‘g‘ri.",
+              );
+            apply(key, index, row);
+            continue;
+          }
+        } catch (error) {
+          reject(key, index, error.message);
+        }
+      }
+    }
+    const replacingCount =
+      mode === "replace"
+        ? pending.keys.reduce(
+            (total, key) => total + (state.db[prop(key)] || []).length,
+            0,
+          )
+        : 0;
+    try {
+      validateData(data);
+    } catch (error) {
+      report.ready = false;
+      reject("Umumiy", 0, `Yakuniy tekshiruv: ${error.message}`);
+    }
+    try {
+      const importedRegistry = (pending.loginRegistry || []).map((entry) => ({
+        ...entry,
+        ownerId: entry.role === "student" ? studentAliases.get(entry.ownerId) || entry.ownerId : entry.ownerId,
+      }));
+      syncLoginRegistry(data, state.db, importedRegistry);
+    } catch (error) {
+      report.ready = false;
+      reject("Loginlar", 0, error.message);
+    }
+    report.replacingCount = replacingCount;
+    report.summary = `Qo‘shildi: ${report.added} · Yangilandi: ${report.updated} · Rad etildi: ${report.rejected}`;
+    return { data, ...report };
+  }
+  async function saveJSONImport() {
+    const preview = state.jsonImportPreview,
+      pending = state.jsonImportPending;
+    if (!preview?.ready || !pending || !state.jsonImportMode) return;
+    if (
+      state.jsonImportMode === "replace" &&
+      preview.replacingCount > 0 &&
+      !confirm(
+        `${preview.replacingCount} ta mavjud yozuv almashtiriladi. Davom etasizmi?`,
+      )
+    )
+      return;
+    try {
+      validateData(preview.data);
+      await saveData(preview.data);
+      state.db = preview.data;
+      state.jsonImportReport = {
+        added: preview.added,
+        updated: preview.updated,
+        rejected: preview.rejected,
+        errors: [...preview.errors],
+      };
+      state.jsonImportPending = null;
+      state.jsonImportMode = "";
+      state.jsonImportPreview = null;
+      render();
+      notify("JSON import saqlandi.");
+    } catch (error) {
+      notify(`JSON saqlanmadi: ${error.message}`);
+    }
+  }
+  function exportJSON() {
+    downloadFile(
+      "sinf-daftari-zaxira.json",
+      JSON.stringify(state.db, null, 2),
+      "application/json;charset=utf-8",
+    );
+    notify("JSON zaxira nusxasi yuklandi.");
+  }
+  function exportGradesCSV() {
+    const rows = [
+      ["student_username", "subject", "grade", "date", "comment"],
+      ...state.db.grades.map((g) => [
+        byStudent(g.studentId)?.username || "",
+        g.subject,
+        g.value,
+        g.date,
+        g.comment || "",
+      ]),
+    ];
+    downloadFile(
+      "baholar.csv",
+      "\uFEFF" + rows.map((r) => r.map(escapeCSV).join(",")).join("\r\n"),
+      "text/csv;charset=utf-8",
+    );
+    notify("Baholar CSV fayli yuklandi.");
+  }
+  function exportAttendanceCSV() {
+    const rows = [
+      ["student_username", "full_name", "date", "status", "skipped_lessons"],
+      ...state.db.attendance.map((a) => [
+        byStudent(a.studentId)?.username || "",
+        byStudent(a.studentId)?.fullName || "",
+        a.date,
+        a.status,
+        a.skippedLessons,
+      ]),
+    ];
+    downloadFile(
+      "davomat.csv",
+      "\uFEFF" + rows.map((r) => r.map(escapeCSV).join(",")).join("\r\n"),
+      "text/csv;charset=utf-8",
+    );
+    notify("Davomat CSV fayli yuklandi.");
+  }
+  async function importGradesCSV(file) {
+    try {
+      if (!state.user || !["developer", "teacher"].includes(state.user.role))
+        throw new Error("CSV baho importiga ruxsat yo‘q.");
+      const rows = csvParse((await file.text()).replace(/^\uFEFF/, ""));
+      if (rows.length < 2)
+        throw new Error(
+          "Faylda sarlavha va ma’lumot qatorlari bo‘lishi kerak.",
+        );
+      const header = rows[0].map((x) => x.trim());
+      const needed = ["student_username", "subject", "grade", "date"];
+      if (!needed.every((x) => header.includes(x)))
+        throw new Error(
+          "Kerakli ustunlar: student_username, subject, grade, date.",
+        );
+      const index = Object.fromEntries(
+        needed.map((k) => [k, header.indexOf(k)]),
+      );
+      const errors = [];
+      let imported = 0;
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i],
+          line = i + 1,
+          username = (row[index.student_username] || "").trim(),
+          subject = (row[index.subject] || "").trim(),
+          gradeRaw = (row[index.grade] || "").trim(),
+          date = (row[index.date] || "").trim(),
+          student = state.db.students.find(
+            (s) => s.username.toLowerCase() === username.toLowerCase(),
+          ),
+          grade = Number(gradeRaw);
+        let reason = "";
+        if (!student || student.archived) reason = "student_username topilmadi";
+        else if (!state.db.subjects.includes(subject))
+          reason = "fan ro‘yxatda yo‘q";
+        else if (
+          state.user.role === "teacher" &&
+          !teacherCanEditGrade(state.user.teacherId, student.classId, subject)
+        ) reason = "Bu sinf va fan uchun baho kiritish huquqi yo‘q";
+        else if (!validGradeValue(state.db, grade))
+          reason = gradeRangeMessage();
+        else if (!isDate(date))
+          reason = "sana YYYY-MM-DD formatida bo‘lishi kerak";
+        if (reason) {
+          errors.push(`Qator ${line}: ${reason}`);
+          continue;
+        }
+        const comment = header.includes("comment")
+          ? String(row[header.indexOf("comment")] || "").trim()
+          : "";
+        const old = state.db.grades.find(
+          (g) =>
+            g.studentId === student.id &&
+            g.subject === subject &&
+            g.date === date,
+        );
+        if (old) {
+          old.value = grade;
+          old.comment = comment;
+        } else
+          state.db.grades.push({
+            id: id("grade"),
+            studentId: student.id,
+            subject,
+            value: grade,
+            date,
+            comment,
+          });
+        imported++;
+      }
+      if (imported) await saveData(state.db);
+      state.importReport = {
+        summary: `${imported} ta baho olib kirildi; ${errors.length} ta xato qator.`,
+        errors,
+      };
+      render();
+      notify(
+        `${imported} ta baho olib kirildi.${errors.length ? ` ${errors.length} ta xato qator hisobotda ko‘rsatilgan.` : ""}`,
+      );
+    } catch (e) {
+      notify(`CSV import amalga oshmadi: ${e.message}`);
+    }
+  }
+  function parseCurriculumRows(rows, subjectNames) {
+    if (rows.length < 2)
+      throw new Error("Faylda sarlavha va ma’lumot qatorlari bo‘lishi kerak.");
+    const header = rows[0].map((cell) => cell.trim()),
+      required = ["grade", "subject", "weekly_hours"];
+    if (!required.every((name) => header.includes(name)))
+      throw new Error("Ustunlar: grade, subject, weekly_hours.");
+    const idx = Object.fromEntries(
+        required.map((name) => [name, header.indexOf(name)]),
+      ),
+      errors = [],
+      valid = [],
+      seen = new Set();
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i],
+        line = i + 1,
+        gradeText = (row[idx.grade] || "").trim(),
+        grade = Number(gradeText),
+        name = (row[idx.subject] || "").trim(),
+        hoursText = (row[idx.weekly_hours] || "").trim(),
+        hours = hoursText === "" ? null : Number(hoursText);
+      let reason = "";
+      if (!Number.isInteger(grade) || grade < 1 || grade > 11)
+        reason = "sinf bosqichi 1–11 oralig‘idagi butun son bo‘lishi kerak";
+      else if (!name) reason = "fan nomi bo‘sh bo‘lmasligi kerak";
+      else if (
+        hoursText !== "" &&
+        (!Number.isInteger(hours) || hours < 0 || hours > 12)
+      )
+        reason =
+          "haftalik soat bo‘sh yoki 0–12 oralig‘idagi butun son bo‘lishi kerak";
+      const existing = subjectNames.find(
+        (subject) =>
+          subject.toLocaleLowerCase("uz") === name.toLocaleLowerCase("uz"),
+      );
+      const key = reason
+        ? ""
+        : `${grade}|${subjectIdForName(existing || name)}`;
+      if (!reason && seen.has(key))
+        reason = "bu sinf va fan CSV faylida takrorlangan";
+      if (reason) {
+        errors.push(`Qator ${line}: ${reason}`);
+        continue;
+      }
+      seen.add(key);
+      valid.push({ grade, name: existing || name, weeklyHours: hours });
+    }
+    return { valid, errors };
+  }
+  async function importCurriculumCSV(file) {
+    try {
+      const rows = csvParse((await file.text()).replace(/^\uFEFF/, "")),
+        { valid, errors } = parseCurriculumRows(rows, state.db.subjects);
+      if (!valid.length) {
+        state.curriculumImportReport = {
+          summary: `0 ta fan-sinf qatori olindi; ${errors.length} ta xato qator. Joriy reja o‘zgarmadi.`,
+          errors,
+        };
+        render();
+        notify("CSV dan yaroqli qator topilmadi. Hisobotni ko‘ring.");
+        return;
+      }
+      if (
+        !confirm(
+          `${valid.length} ta yaroqli qator bilan joriy o‘quv reja almashtiriladi. Davom etasizmi?`,
+        )
+      )
+        return;
+      const importedSubjects = new Set(
+        state.db.subjects.map((name) => name.toLocaleLowerCase("uz")),
+      );
+      const curriculum = valid.map((row) => {
+        if (!importedSubjects.has(row.name.toLocaleLowerCase("uz"))) {
+          state.db.subjects.push(row.name);
+          importedSubjects.add(row.name.toLocaleLowerCase("uz"));
+        }
+        return {
+          id: id("curriculum"),
+          grade: row.grade,
+          subjectId: subjectIdForName(row.name),
+          weeklyHours: row.weeklyHours,
+        };
+      });
+      state.db.curriculum = curriculum;
+      state.db.curriculumConfirmed = false;
+      await saveData(state.db);
+      state.curriculumImportReport = {
+        summary: `${valid.length} ta qator olindi; ${errors.length} ta xato qator. Joriy reja yaroqli qatorlar bilan almashtirildi.`,
+        errors,
+      };
+      render();
+      notify(
+        `${valid.length} ta qator olindi.${errors.length ? ` ${errors.length} ta xato hisobotda ko‘rsatilgan.` : ""}`,
+      );
+    } catch (error) {
+      state.curriculumImportReport = {
+        summary: `Import amalga oshmadi: ${error.message}`,
+        errors: [],
+      };
+      render();
+      notify(`O‘quv reja importi amalga oshmadi: ${error.message}`);
+    }
+  }
+  function seedDemo() {
+    const first = [
+      "Aziz",
+      "Madina",
+      "Jasur",
+      "Shahnoza",
+      "Bekzod",
+      "Zilola",
+      "Sardor",
+      "Mohira",
+      "Diyor",
+      "Sevara",
+      "Akmal",
+      "Gulnoza",
+      "Oybek",
+      "Malika",
+      "Kamron",
+      "Dilnoza",
+      "Farrux",
+      "Nilufar",
+      "Javohir",
+      "Munisa",
+    ];
+    const last = [
+      "Karimov",
+      "Usmonova",
+      "Rahimov",
+      "Tursunova",
+      "Yusupov",
+      "Qodirova",
+      "Islomov",
+      "Nazarova",
+      "Abdullayev",
+      "Ergasheva",
+      "Saidov",
+      "Olimova",
+      "Rustamov",
+      "Sobirova",
+      "Xolmatov",
+      "Mamatova",
+      "To‘rayev",
+      "Sharipova",
+      "Mahmudov",
+      "Aliyeva",
+    ];
+    const today = todayISO(),
+      thisMonday = mondayOf(today),
+      weeks = Array.from({ length: 4 }, (_, i) =>
+        addDays(thisMonday, -7 * (3 - i)),
+      ),
+      demoStudents = [];
+    const rand = (max) => Math.floor(Math.random() * max);
+    const classId =
+      state.db.classes.find((c) => c.name === "5-A")?.id || id("class");
+    if (!state.db.classes.some((c) => c.id === classId))
+      state.db.classes.push({ id: classId, name: "5-A" });
+    const usedUsernames = new Set(
+      state.db.students.map((s) => s.username.toLowerCase()),
+    );
+    for (let i = 0; i < 20; i++) {
+      const base = `demo${String(i + 1).padStart(2, "0")}`;
+      let username = base,
+        suffix = 2;
+      while (usedUsernames.has(username.toLowerCase()))
+        username = `${base}-${suffix++}`;
+      usedUsernames.add(username.toLowerCase());
+      demoStudents.push({
+        id: `demo-stu-${String(i + 1).padStart(3, "0")}`,
+        fullName: `${first[i]} ${last[i]}`,
+        username,
+        passwordHash: "",
+        classId,
+      });
+    }
+    return (async () => {
+      const hash = await Storage.hashPassword(
+        crypto.getRandomValues(new Uint8Array(16)).join("-"),
+      );
+      for (const s of demoStudents) s.passwordHash = hash;
+      state.db.students.push(...demoStudents);
+      const subjects = state.db.subjects;
+      for (const week of weeks) {
+        for (const s of demoStudents) {
+          for (let day = 0; day < 5; day++) {
+            const date = addDays(week, day);
+            if (date > today) continue;
+            const dice = rand(100),
+              status =
+                dice < 89 ? "present" : dice < 96 ? "excused" : "unexcused",
+              skipped = rand(100) < 12 ? 1 : 0;
+            state.db.attendance.push({
+              studentId: s.id,
+              date,
+              status,
+              skippedLessons: skipped,
+            });
+          }
+          for (let j = 0; j < 3; j++) {
+            const date = addDays(week, rand(5));
+            if (date > today) continue;
+            const raw = rand(100),
+              value = raw < 9 ? 2 : raw < 34 ? 3 : raw < 74 ? 4 : 5;
+            state.db.grades.push({
+              id: id("grade"),
+              studentId: s.id,
+              subject: subjects[(j + rand(3)) % subjects.length],
+              value,
+              date,
+              comment: "",
+            });
+          }
+        }
+      }
+      await saveData(state.db);
+      state.view = "overview";
+      render();
+      notify("20 nafar demo o‘quvchi va namunaviy ma’lumot yaratildi.");
+    })();
+  }
+  async function deleteDemo() {
+    const ids = new Set(
+      state.db.students
+        .filter((s) => s.id.startsWith("demo-stu-"))
+        .map((s) => s.id),
+    );
+    for (const student of state.db.students)
+      if (ids.has(student.id)) invalidateUserSessions(student);
+    state.db.students = state.db.students.filter((s) => !ids.has(s.id));
+    state.db.attendance = state.db.attendance.filter(
+      (a) => !ids.has(a.studentId),
+    );
+    state.db.grades = state.db.grades.filter((g) => !ids.has(g.studentId));
+    state.db.weeklySnapshots = state.db.weeklySnapshots.map((w) => ({
+      ...w,
+      ratings: w.ratings.filter((r) => !ids.has(r.studentId)),
+    }));
+    await saveData(state.db);
+    render();
+    notify("Demo ma’lumotlar o‘chirildi.");
+  }
+
+  // ===== Event delegation =====
+  root.addEventListener("submit", (event) => {
+    handleSubmit(event).catch((e) => notify(`Xatolik: ${e.message}`));
+  });
+  window.addEventListener("hashchange", () => {
+    if (state.db) render();
+  });
+  root.addEventListener("input", (event) => {
+    const studentForm = event.target.closest('[data-form="student"]');
+    if (studentForm && ["fullName", "username"].includes(event.target.name)) {
+      if (event.target.name === "username") event.target.dataset.edited = "true";
+      updateStudentLogin(studentForm);
+      return;
+    }
+    const form = event.target.closest('[data-form="teacher"]');
+    if (!form) return;
+    if (event.target.name === "login") event.target.dataset.edited = "true";
+    if (event.target.name === "label") {
+      const loginInput = form.elements.namedItem("login");
+      if (loginInput && loginInput.dataset.edited !== "true")
+        loginInput.value = suggestTeacherLogin(event.target.value);
+    }
+    captureTeacherDraft();
+  });
+  root.addEventListener("click", (event) => {
+    const el = event.target.closest("[data-action]");
+    if (!el) return;
+    const action = el.dataset.action;
+    event.preventDefault();
+    const developerOnlyActions = new Set([
+      "add-class", "add-standard-sections", "cancel-class-form", "edit-class", "delete-class",
+      "add-subject", "cancel-subject-form", "edit-subject", "delete-subject",
+      "random-timetable", "bulk-random-timetable", "bulk-random-cancel", "bulk-random-confirm",
+      "edit-timetable", "cancel-timetable-edit", "clear-timetable",
+      "json-import-save", "json-import-cancel", "export-json", "export-grades-csv", "export-attendance-csv",
+      "save-placement", "download-placement-errors",
+      "database-tab", "database-page",
+    ]);
+    if (developerOnlyActions.has(action) && state.user?.role !== "developer") {
+      notify("Bu amal faqat dasturchi oynasida mumkin.");
+      return;
+    }
+    (async () => {
+      if (action === "database-tab") {
+        state.databaseTab = el.dataset.tab;
+        state.databasePage = 0;
+        state.databaseSearch = "";
+        render();
+      } else if (action === "database-page") {
+        state.databasePage = Math.max(0, Number(el.dataset.page) || 0);
+        render();
+      } else if (action === "generate-student-login") {
+        const form = el.closest('[data-form="student"]');
+        if (form) updateStudentLogin(form, true);
+      } else if (action === "toggle-password") {
+        const input = document.getElementById(el.dataset.target);
+        if (input) {
+          const visible = input.type === "password";
+          input.type = visible ? "text" : "password";
+          el.textContent = visible ? "Yashirish" : "Ko‘rsatish";
+          el.setAttribute("aria-pressed", String(visible));
+        }
+      } else if (action === "add-teacher") {
+        state.teacherFormOpen = true;
+        state.editTeacherId = null;
+        state.teacherDraft = defaultTeacherDraft();
+        render();
+      } else if (action === "cancel-teacher-form") {
+        state.teacherFormOpen = false;
+        state.editTeacherId = null;
+        state.teacherDraft = null;
+        render();
+      } else if (action === "add-teacher-row") {
+        captureTeacherDraft();
+        state.teacherDraft.assignments.push({
+          key: `teacher-row-${++state.teacherRowSeed}`,
+          subjectId: "",
+          classIds: [],
+        });
+        render();
+      } else if (action === "remove-teacher-row") {
+        captureTeacherDraft();
+        state.teacherDraft.assignments = state.teacherDraft.assignments.filter(
+          (row) => row.key !== el.dataset.row,
+        );
+        if (!state.teacherDraft.assignments.length)
+          state.teacherDraft.assignments.push({
+            key: `teacher-row-${++state.teacherRowSeed}`,
+            subjectId: "",
+            classIds: [],
+          });
+        render();
+      } else if (action === "edit-teacher") {
+        state.teacherFormOpen = true;
+        state.editTeacherId = el.dataset.id;
+        state.teacherDraft = defaultTeacherDraft(
+          state.db.teachers.find((teacher) => teacher.id === el.dataset.id),
+        );
+        render();
+      } else if (action === "reset-teacher-password") {
+        const existing = state.db.teachers.find((teacher) => teacher.id === el.dataset.id);
+        if (!existing) return;
+        const temporary = generateTemporaryPassword(existing.label, existing.login),
+          staged = cloneData(state.db),
+          target = staged.teachers.find((teacher) => teacher.id === existing.id);
+        target.passwordHash = await Storage.hashPassword(temporary);
+        invalidateUserSessions(target);
+        target.mustChangePassword = true;
+        if (target.id === staged.teachers[0]?.id)
+          staged.auth.teacherPasswordHash = target.passwordHash;
+        await saveData(staged);
+        state.db = staged;
+        state.temporaryPassword = { value: temporary, teacherId: target.id };
+        render();
+        notify("Yangi vaqtinchalik parol yaratildi.");
+      } else if (action === "toggle-teacher") {
+        const staged = cloneData(state.db),
+          teacher = staged.teachers.find((item) => item.id === el.dataset.id);
+        if (!teacher) return;
+        teacher.active = teacher.active === false;
+        if (!teacher.active) invalidateUserSessions(teacher);
+        await saveData(staged);
+        state.db = staged;
+        render();
+        notify(teacher.active ? "O‘qituvchi faollashtirildi." : "O‘qituvchi nofaol qilindi.");
+      } else if (action === "delete-teacher") {
+        const existing = state.db.teachers.find((teacher) => teacher.id === el.dataset.id);
+        if (!existing) return;
+        const hasClass = state.db.classes.some((klass) => klass.teacherId === existing.id),
+          hasAssignments = (existing.assignments || []).length > 0;
+        if (hasClass || hasAssignments) {
+          notify("Sinf yoki fan biriktirilgan o‘qituvchini o‘chirib bo‘lmaydi.");
+          return;
+        }
+        if (!confirm(`${existing.label} o‘qituvchisini o‘chirasizmi?`)) return;
+        const staged = cloneData(state.db);
+        invalidateUserSessions(staged.teachers.find((teacher) => teacher.id === existing.id));
+        staged.teachers = staged.teachers.filter((teacher) => teacher.id !== existing.id);
+        await saveData(staged);
+        state.db = staged;
+        render();
+        notify("O‘qituvchi o‘chirildi.");
+      } else if (action === "copy-temporary-password") {
+        if (!state.temporaryPassword) return;
+        try {
+          await navigator.clipboard.writeText(state.temporaryPassword.value);
+          notify("Parol nusxalandi.");
+        } catch {
+          const input = document.createElement("textarea");
+          input.value = state.temporaryPassword.value;
+          document.body.append(input);
+          input.select();
+          document.execCommand("copy");
+          input.remove();
+          notify("Parol nusxalandi.");
+        }
+      } else if (action === "close-temporary-password") {
+        state.temporaryPassword = null;
+        render();
+      } else if (action === "forgot-password") {
+        const note = document.getElementById("forgot-password-note");
+        if (note)
+          note.textContent = "Parolni tiklash uchun o‘qituvchingizga murojaat qiling. O‘qituvchi sizga yangi parol beradi.";
+      } else if (action === "open-class") {
+        const klass = classById(el.dataset.id);
+        if (!klass || (state.user.role === "teacher" && !teacherCanSeeClass(state.user.teacherId, klass.id))) {
+          notify("Bu sinfni ko‘rish huquqi yo‘q.");
+          return;
+        }
+        state.classPageId = klass.id;
+        state.classPageTab = "students";
+        state.classPageSearch = "";
+        state.classPageStudentId = "";
+        window.location.hash = `#/${state.user.role}/sinf/${encodeURIComponent(klass.id)}`;
+        render();
+      } else if (action === "class-page-tab") {
+        state.classPageTab = el.dataset.tab === "schedule" ? "schedule" : "students";
+        state.classPageStudentId = "";
+        render();
+      } else if (action === "class-student-detail") {
+        const student = byStudent(el.dataset.id);
+        if (!student || student.classId !== state.classPageId || (state.user.role === "teacher" && !teacherCanSeeClass(state.user.teacherId, student.classId))) {
+          notify("O‘quvchi ma’lumotini ko‘rish huquqi yo‘q.");
+          return;
+        }
+        state.classPageStudentId = student.id;
+        state.classPageTab = "students";
+        render();
+      } else if (action === "class-student-back") {
+        state.classPageStudentId = "";
+        render();
+      } else if (action === "student-tab") {
+        if (state.user.role !== "student") return;
+        state.studentTab = el.dataset.tab === "rating" ? "rating" : "results";
+        render();
+      } else if (action === "back-to-classes") {
+        state.classPageId = "";
+        state.classPageStudentId = "";
+        state.view = "classes";
+        history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+        render();
+      } else if (action === "grade-import-pick") {
+        if (!state.gradeImportBusy && ["developer", "teacher"].includes(state.user?.role)) document.getElementById("grade-import-file")?.click();
+      } else if (action === "grade-import-clear") {
+        if (state.gradeImportBusy) return;
+        gradeImportReadVersion++;
+        state.gradeImportDraft = null;
+        state.gradeImportError = "";
+        render();
+      } else if (action === "grade-import-retry") {
+        if (!["developer", "teacher"].includes(state.user?.role)) return;
+        state.gradeImportLibrary = "idle";
+        render();
+      } else if (action === "grade-import-save") {
+        if (!state.gradeImportBusy && state.gradeImportDraft && buildGradeImportPreview(state.db, state.user, state.gradeImportDraft).ready)
+          document.getElementById("grade-import-confirm-dialog")?.showModal();
+      } else if (action === "grade-import-cancel") {
+        document.getElementById("grade-import-confirm-dialog")?.close();
+      } else if (action === "grade-import-confirm") {
+        if (state.gradeImportBusy || !state.gradeImportDraft) return;
+        const draft = state.gradeImportDraft;
+        const preview = buildGradeImportPreview(state.db, state.user, draft);
+        if (!preview.ready) return;
+        state.gradeImportBusy = true;
+        state.gradeImportError = "";
+        render();
+        try {
+          const result = await saveGradeImportDraft(draft);
+          state.gradeImportDraft = null;
+          notify("Import saqlandi. Qo‘shildi: " + result.added + ", yangilandi: " + result.updated + ", o‘tkazildi: " + result.skipped + ", rad etildi: " + result.rejected + ".");
+        } catch (error) {
+          state.gradeImportError = error.name === "QuotaExceededError" ? "Import saqlanmadi. Brauzer xotirasida joy yetarli emas." : "Import saqlanmadi. Ma’lumot va ruxsatlarni tekshirib, qayta urinib ko‘ring.";
+        } finally { state.gradeImportBusy = false; render(); }
+      } else if (action === "navigate") {
+        const nextView = el.dataset.view || "overview";
+        if (nextView === "grade-import" && ["developer", "teacher"].includes(state.user?.role)) {
+          window.location.hash = "#/import/baholar";
+        } else if (nextView === "placement" && state.user?.role === "developer") {
+          window.location.hash = "#/developer/joylash";
+        } else if (/^#\/(teacher|developer)\/sinf\//.test(window.location.hash) || window.location.hash === "#/developer/joylash" || window.location.hash === "#/import/baholar") {
+          history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+        }
+        state.view = nextView;
+        state.studentFormOpen = false;
+        state.editStudentId = null;
+        render();
+      } else if (action === "logout") logout();
+      else if (action === "add-class") {
+        state.classFormOpen = true;
+        state.editClassId = null;
+        state.classAutoTimetable = true;
+        render();
+      } else if (action === "add-standard-sections") {
+        const added = ensureStandardSections(state.db, true);
+        if (added) await saveData(state.db);
+        render();
+        notify(`${added} ta sinf qo‘shildi.`);
+      } else if (action === "cancel-class-form") {
+        state.classFormOpen = false;
+        state.editClassId = null;
+        render();
+      } else if (action === "edit-class") {
+        state.classFormOpen = true;
+        state.editClassId = el.dataset.id;
+        render();
+      } else if (action === "delete-class") {
+        const c = classById(el.dataset.id);
+        if (!c) return;
+        const block = classDeletionBlock(state.db, c.id);
+        if (block.students || block.lessons) {
+          const reasons = [];
+          if (block.students) reasons.push(`${block.students} nafar o‘quvchi`);
+          if (block.lessons)
+            reasons.push(`${block.lessons} ta dars jadvali yozuvi`);
+          notify(
+            `${c.name} sinfini o‘chirib bo‘lmaydi: ${reasons.join(" va ")} bor.`,
+          );
+          return;
+        }
+        if (confirm(`${c.name} sinfini o‘chirishni tasdiqlaysizmi?`)) {
+          state.db.classes = state.db.classes.filter(
+            (item) => item.id !== c.id,
+          );
+          await saveData(state.db);
+          render();
+          notify("Sinf o‘chirildi.");
+        }
+      } else if (action === "random-timetable") {
+        const klass = classById(state.scheduleClassId),
+          existing = state.db.timetable.filter(
+            (row) => row.classId === klass?.id,
+          );
+        if (!klass) {
+          notify("Avval sinfni tanlang.");
+          return;
+        }
+        if (!confirmRandomTimetableOverwrite(existing)) return;
+        const generated = generatedRowsForClass(klass);
+        if (generated.error) {
+          notify(generated.error);
+          return;
+        }
+        state.db.timetable = [
+          ...state.db.timetable.filter((row) => row.classId !== klass.id),
+          ...generated.rows,
+        ];
+        await saveData(state.db);
+        state.scheduleEditMode = false;
+        render();
+        notify(
+          `${generated.rows.length} ta dars random tuzildi.${generated.warning ? ` ${generated.warning}.` : ""} Bir kunda takrorlar: ${generated.repeats}.`,
+        );
+      } else if (action === "bulk-random-timetable") {
+        document.getElementById("bulk-random-dialog")?.showModal();
+      } else if (action === "bulk-random-cancel") {
+        document.getElementById("bulk-random-dialog")?.close();
+      } else if (action === "bulk-random-confirm") {
+        const replaceExisting =
+            document.getElementById("replace-existing-timetables")?.checked ===
+            true,
+          eligible = state.db.classes.filter(
+            (klass) =>
+              replaceExisting ||
+              !state.db.timetable.some((row) => row.classId === klass.id),
+          );
+        if (!eligible.length) {
+          document.getElementById("bulk-random-dialog")?.close();
+          notify("Jadval tuziladigan bo‘sh sinf topilmadi.");
+          return;
+        }
+        let generatedCount = 0,
+          lessonsMade = 0,
+          repeats = 0;
+        const errors = [];
+        for (const klass of eligible) {
+          const generated = generatedRowsForClass(klass);
+          if (generated.error) {
+            errors.push(`${klass.name}: ${generated.error}`);
+            continue;
+          }
+          state.db.timetable = state.db.timetable.filter(
+            (row) => row.classId !== klass.id,
+          );
+          state.db.timetable.push(...generated.rows);
+          generatedCount++;
+          lessonsMade += generated.rows.length;
+          repeats += generated.repeats;
+        }
+        document.getElementById("bulk-random-dialog")?.close();
+        if (generatedCount) {
+          await saveData(state.db);
+          state.scheduleEditMode = false;
+        }
+        render();
+        notify(
+          `${generatedCount} ta sinfga ${lessonsMade} ta dars tuzildi. Takrorlar: ${repeats}.${errors.length ? ` Xatolar: ${errors.join("; ")}.` : ""}`,
+        );
+      } else if (action === "edit-timetable") {
+        state.scheduleEditMode = true;
+        render();
+      } else if (action === "cancel-timetable-edit") {
+        state.scheduleEditMode = false;
+        render();
+      } else if (action === "clear-timetable") {
+        const klass = classById(state.scheduleClassId),
+          existing = state.db.timetable.filter(
+            (row) => row.classId === klass?.id,
+          );
+        if (!klass || !existing.length) {
+          notify("Tanlangan sinf jadvali bo‘sh.");
+          return;
+        }
+        if (confirm(`${existing.length} ta darsni jadvaldan tozalaysizmi?`)) {
+          state.db.timetable = state.db.timetable.filter(
+            (row) => row.classId !== klass.id,
+          );
+          state.scheduleEditMode = false;
+          await saveData(state.db);
+          render();
+          notify("Tanlangan sinf jadvali tozalandi.");
+        }
+      } else if (action === "add-subject") {
+        state.subjectFormOpen = true;
+        state.editSubject = null;
+        render();
+      } else if (action === "cancel-subject-form") {
+        state.subjectFormOpen = false;
+        state.editSubject = null;
+        render();
+      } else if (action === "edit-subject") {
+        state.subjectFormOpen = true;
+        state.editSubject = el.dataset.name;
+        render();
+      } else if (action === "delete-subject") {
+        const name = el.dataset.name,
+          u = subjectUsage(name),
+          total = usageCount(u);
+        if (total) {
+          notify(
+            `“${name}” fanini o‘chirib bo‘lmaydi: ${total} ta foydalanish (${u.grades} baho, ${u.schedule} dars jadvali, ${u.curriculum} o‘quv reja).`,
+          );
+          return;
+        }
+        if (confirm(`“${name}” fanini o‘chirasizmi?`)) {
+          state.db.subjects = state.db.subjects.filter(
+            (subject) => subject !== name,
+          );
+          await saveData(state.db);
+          render();
+          notify("Fan o‘chirildi.");
+        }
+      } else if (action === "add-student") {
+        if (!["teacher", "developer"].includes(state.user?.role)) {
+          notify("O‘quvchini boshqarish huquqi yo‘q.");
+          return;
+        }
+        if (state.user.role === "teacher" && !state.db.classes.some((klass) => teacherCanManageStudents(state.user.teacherId, klass.id))) {
+          notify("O‘quvchilarni faqat sinf rahbari boshqaradi.");
+          return;
+        }
+        state.studentFormOpen = true;
+        state.editStudentId = null;
+        render();
+        document.getElementById("student-name")?.focus();
+      } else if (action === "cancel-student-form") {
+        state.studentFormOpen = false;
+        state.editStudentId = null;
+        render();
+      } else if (action === "edit-student") {
+        const targetStudent = byStudent(el.dataset.id);
+        if (!targetStudent || (state.user.role === "teacher" && !teacherCanManageStudents(state.user.teacherId, targetStudent.classId))) {
+          notify("Faqat sizga biriktirilgan sinf o‘quvchilarini boshqarishingiz mumkin.");
+          return;
+        }
+        state.studentFormOpen = true;
+        state.editStudentId = el.dataset.id;
+        render();
+        document.getElementById("student-name")?.focus();
+      } else if (action === "delete-student") {
+        const s = byStudent(el.dataset.id);
+        if (!s || !["teacher", "developer"].includes(state.user?.role) || (state.user.role === "teacher" && !teacherCanManageStudents(state.user.teacherId, s.classId))) {
+          notify("Faqat sizga biriktirilgan sinf o‘quvchilarini boshqarishingiz mumkin.");
+          return;
+        }
+        if (
+          s &&
+          confirm(
+            `${s.fullName} va unga tegishli baho hamda davomat yozuvlarini o‘chirasizmi?`,
+          )
+        ) {
+          invalidateUserSessions(s);
+          state.db.students = state.db.students.filter((x) => x.id !== s.id);
+          state.db.attendance = state.db.attendance.filter(
+            (x) => x.studentId !== s.id,
+          );
+          state.db.grades = state.db.grades.filter((x) => x.studentId !== s.id);
+          await saveData(state.db);
+          render();
+          notify("O‘quvchi va unga tegishli yozuvlar o‘chirildi.");
+        }
+      } else if (action === "reset-student-password") {
+        const s = byStudent(el.dataset.id);
+        if (!s) return;
+        if (!["teacher", "developer"].includes(state.user?.role) || (state.user.role === "teacher" && !teacherCanManageStudents(state.user.teacherId, s.classId))) {
+          notify("Faqat sizga biriktirilgan sinf o‘quvchilarini boshqarishingiz mumkin.");
+          return;
+        }
+        const next = prompt(
+          `${s.fullName} uchun yangi parol kiriting:`,
+        );
+        if (next === null) return;
+        const passwordError = validateNewPassword(next, s.fullName, s.username);
+        if (passwordError) {
+          notify(passwordError);
+          return;
+        }
+        if (confirm(`${s.fullName} parolini yangilaysizmi?`)) {
+          s.passwordHash = await Storage.hashPassword(next);
+          invalidateUserSessions(s);
+          s.mustChangePassword = true;
+          await saveData(state.db);
+          notify("O‘quvchi paroli yangilandi.");
+        }
+      } else if (action === "all-present") {
+        for (const select of root.querySelectorAll(
+          '#attendance-form select[name^="status-"]',
+        ))
+          select.value = "present";
+        for (const input of root.querySelectorAll(
+          '#attendance-form input[name^="skipped-"]',
+        ))
+          input.value = "0";
+      } else if (action === "edit-grade") {
+        const grade = state.db.grades.find((item) => item.id === el.dataset.id),
+          student = grade && byStudent(grade.studentId);
+        if (!grade || !student || !teacherCanEditGrade(state.user.teacherId, student.classId, grade.subject)) {
+          notify("Bu sinf va fan uchun bahoni tahrirlash huquqi yo‘q.");
+          return;
+        }
+        state.editGradeId = el.dataset.id;
+        render();
+      } else if (action === "cancel-grade-edit") {
+        state.editGradeId = null;
+        render();
+      } else if (action === "delete-grade") {
+        const g = state.db.grades.find((x) => x.id === el.dataset.id);
+        const student = g && byStudent(g.studentId);
+        if (!g || !student || !teacherCanEditGrade(state.user.teacherId, student.classId, g.subject)) {
+          notify("Bu sinf va fan uchun bahoni o‘chirish huquqi yo‘q.");
+          return;
+        }
+        if (
+          g &&
+          confirm(
+            `${prettyDate(g.date)} kungi ${g.subject} bahosini o‘chirasizmi?`,
+          )
+        ) {
+          state.db.grades = state.db.grades.filter((x) => x.id !== g.id);
+          await saveData(state.db);
+          render();
+          notify("Baho o‘chirildi.");
+        }
+      } else if (action === "clear-grade-filters") {
+        state.gradeFilters = {
+          student: "",
+          subject: "",
+          from: "",
+          to: "",
+        };
+        render();
+      } else if (action === "close-week") {
+        if (
+          state.db.weeklySnapshots.some((s) => s.weekStart === state.ratingWeek)
+        ) {
+          notify("Bu hafta allaqachon yopilgan.");
+          return;
+        }
+        if (
+          confirm(
+            `${weekLabel(state.ratingWeek)} natijalarini muzlatib saqlaysizmi?`,
+          )
+        ) {
+          state.db.weeklySnapshots.push({
+            weekStart: state.ratingWeek,
+            closedAt: new Date().toISOString(),
+            ratings: calculateRatings(state.db, state.ratingWeek),
+            schoolRanking: calculateRatings(state.db, state.ratingWeek),
+            classRankings: calculateClassRatings(state.db, state.ratingWeek),
+          });
+          await saveData(state.db);
+          render();
+          notify("Hafta yopildi, natija saqlandi.");
+        }
+      } else if (action === "json-import-save") await saveJSONImport();
+      else if (action === "json-import-cancel") {
+        state.jsonImportPending = null;
+        state.jsonImportMode = "";
+        state.jsonImportPreview = null;
+        render();
+      } else if (action === "export-json") exportJSON();
+      else if (action === "export-grades-csv") exportGradesCSV();
+      else if (action === "export-attendance-csv") exportAttendanceCSV();
+      else if (action === "save-placement") await savePlacement();
+      else if (action === "download-placement-errors") {
+        const errors = state.placementPending?.rejected || [];
+        const rows = [["row_number", "reason"], ...errors.map((item) => [item.rowNumber, item.reason])];
+        downloadFile(
+          "joylash-xatolari.csv",
+          "\uFEFF" + rows.map((row) => row.map(escapeCSV).join(",")).join("\r\n"),
+          "text/csv;charset=utf-8",
+        );
+      }
+    })().catch((e) => notify(`Xatolik: ${e.message}`));
+  });
+  root.addEventListener("change", (event) => {
+    const el = event.target;
+    if (el.id === "grade-import-file") {
+      if (el.files?.[0]) readGradeImportFile(el.files[0]);
+      return;
+    }
+    if (el.hasAttribute("data-import-map") || el.hasAttribute("data-import-group") || el.hasAttribute("data-import-subject") || el.hasAttribute("data-import-conflict")) {
+      const draft = state.gradeImportDraft;
+      if (!draft || state.gradeImportBusy || !["developer", "teacher"].includes(state.user?.role)) return;
+      const preview = buildGradeImportPreview(state.db, state.user, draft);
+      if (el.hasAttribute("data-import-map")) {
+        const field = el.dataset.importMap;
+        if (GRADE_IMPORT_FIELDS.includes(field)) draft.mapping[field] = el.value;
+        draft.choices = {};
+        draft.subjectChoices = {};
+        draft.conflictChoices = {};
+      } else if (el.hasAttribute("data-import-group")) {
+        const group = preview.groups[Number(el.dataset.importGroup)];
+        if (group) draft.choices[group.key] = el.value;
+        draft.conflictChoices = {};
+      } else if (el.hasAttribute("data-import-subject")) {
+        const item = preview.unknownSubjects[Number(el.dataset.importSubject)];
+        if (item) draft.subjectChoices[item.key] = el.value;
+        draft.conflictChoices = {};
+      } else draft.conflictChoices[String(el.dataset.importConflict)] = el.value === "update" ? "update" : "skip";
+      render();
+      return;
+    }
+    if (el.closest('[data-form="teacher"]')) {
+      captureTeacherDraft();
+      if (el.name?.startsWith("subject-")) {
+        const row = state.teacherDraft.assignments.find(
+          (item) => item.key === el.name.slice("subject-".length),
+        );
+        if (row)
+          row.classIds = row.classIds.filter((classId) =>
+            eligibleClassesForSubject(row.subjectId).some((klass) => klass.id === classId),
+          );
+        render();
+      }
+    } else if (el.id === "attendance-date") {
+      if (isDate(el.value)) {
+        state.attendanceDate = el.value;
+        render();
+      } else notify("Sanani tekshiring.");
+    } else if (el.id === "grade-date") {
+      if (isDate(el.value)) {
+        state.gradeDate = el.value;
+        render();
+      } else notify("Sanani tekshiring.");
+    } else if (el.id === "grade-subject") {
+      state.gradeSubject = el.value;
+      render();
+    } else if (el.id === "grade-class") {
+      state.gradeClassId = el.value;
+      render();
+    } else if (el.id === "rating-week") {
+      state.ratingWeek = el.value;
+      render();
+    } else if (el.id === "read-curriculum-grade") {
+      state.curriculumGrade = Number(el.value);
+      render();
+    } else if (el.id === "schedule-class") {
+      state.scheduleClassId = el.value;
+      render();
+    } else if (el.id === "json-import-mode") {
+      state.jsonImportMode = el.value;
+      try {
+        state.jsonImportPreview = el.value
+          ? buildJSONImportPlan(state.jsonImportPending, el.value)
+          : null;
+        render();
+      } catch (error) {
+        notify(`JSON tekshiruvi amalga oshmadi: ${error.message}`);
+      }
+    } else if (el.id === "import-json" && el.files?.[0]) {
+      importJSON(el.files[0]);
+      el.value = "";
+    } else if (el.id === "import-csv" && el.files?.[0]) {
+      importGradesCSV(el.files[0]);
+      el.value = "";
+    } else if (el.id === "import-curriculum" && el.files?.[0]) {
+      importCurriculumCSV(el.files[0]);
+      el.value = "";
+    } else if (el.id === "import-placement" && el.files?.[0]) {
+      readPlacementCSV(el.files[0]);
+      el.value = "";
+    } else if (el.id === "placement-must-change") {
+      state.placementOptions.mustChangePassword = el.checked;
+    } else if (el.id === "placement-archive-missing") {
+      state.placementOptions.archiveMissing = el.checked;
+    }
+  });
+
+  // ===== Browser-console self tests =====
+  window.runImportPermissionTests = async function () {
+    const checks = [],
+      expect = (condition, message) => { if (!condition) throw new Error(message); },
+      test = async (name, fn) => {
+        try { await fn(); checks.push({ test: name, result: "passed" }); }
+        catch (error) { checks.push({ test: name, result: "failed", detail: error.message }); }
+      },
+      teacher = { role: "teacher", teacherId: "permission-teacher" },
+      developer = { role: "developer" },
+      fixture = () => ({
+        settings: { gradeMin: 1, gradeMax: 10 },
+        subjects: ["Matematika", "Ona tili"],
+        classes: [
+          { id: "permission-6-a", name: "6-A", teacherId: "permission-teacher" },
+          { id: "permission-5-b", name: "5-B", teacherId: "another-teacher" },
+        ],
+        teachers: [{ id: "permission-teacher", active: true, assignments: [] }],
+        students: [
+          { id: "permission-student-a", fullName: "Ali Valiyev", classId: "permission-6-a", archived: false },
+          { id: "permission-student-b", fullName: "Dilorom Karimova", classId: "permission-5-b", archived: false },
+        ],
+        grades: [], attendance: [], importLog: [],
+      }),
+      draftFor = (rows) => createGradeImportDraft([["F.I.Sh", "Fan", "Baho", "Sana", "Sinf"], ...rows], "ruxsat-sinovi.csv"),
+      contextFor = (db, user = teacher) => {
+        const context = { state: { db, user }, writes: 0, saveData: async () => { context.writes++; } };
+        return context;
+      },
+      assignMath = (db) => {
+        db.teachers[0].assignments = [{ classId: "permission-6-a", subjectId: subjectIdForName("Matematika") }];
+      };
+    await test("Sinf rahbari fan biriktirmasisiz Matematika bahosini import qila olmaydi", async () => {
+      const db = fixture(), context = contextFor(db),
+        draft = draftFor([["Ali Valiyev", "Matematika", 8, "2026-10-03", "6-A"]]),
+        preview = buildGradeImportPreview(db, teacher, draft);
+      expect(!teacherCanEditGrade(teacher.teacherId, "permission-6-a", "Matematika", db), "Qo‘lda baholash qoidasi kutilmaganda ruxsat berdi.");
+      expect(preview.summary.permissionDenied === 1 && preview.summary.skipped === 1 && !preview.ready, "Ruxsatsiz qator o‘tkazib yuborilmadi.");
+      expect(preview.rows[0].permissionDenied && preview.rows[0].reasons.some((reason) => reason.startsWith("Ruxsat yo‘q")), "Ruxsat sababi ko‘rsatilmagan.");
+      try { await saveGradeImportDraft(draft, context); } catch { /* Ruxsatsiz saqlash rad etiladi. */ }
+      expect(context.writes === 0 && context.state.db.grades.length === 0, "Biriktirmasiz yangi baho saqlandi.");
+      db.grades.push({ id: "permission-existing", studentId: "permission-student-a", subject: "Matematika", value: 6, date: "2026-10-03", comment: "Avvalgi izoh" });
+      draft.conflictChoices["2"] = "update";
+      const deniedUpdate = buildGradeImportPreview(db, teacher, draft);
+      expect(deniedUpdate.rows[0].permissionDenied && !deniedUpdate.rows[0].conflict, "Ruxsatsiz qatorga yangilash tanlovi ochildi.");
+      try { await saveGradeImportDraft(draft, context); } catch { /* Ruxsatsiz yangilash ham rad etiladi. */ }
+      expect(context.writes === 0 && db.grades[0].value === 6 && db.grades[0].comment === "Avvalgi izoh", "Ruxsatsiz mavjud baho yangilandi.");
+    });
+    await test("Matematika 6-A biriktirmasi 6-A uchun ruxsat beradi, 5-B uchun bermaydi", async () => {
+      const db = fixture();
+      assignMath(db);
+      const context = contextFor(db), draft = draftFor([
+        ["Ali Valiyev", "Matematika", 8, "2026-10-03", "6-A"],
+        ["Dilorom Karimova", "Matematika", 9, "2026-10-03", "5-B"],
+        ["Ali Valiyev", "Ona tili", 7, "2026-10-03", "6-A"],
+      ]), preview = buildGradeImportPreview(db, teacher, draft);
+      expect(preview.ready && preview.summary.permissionDenied === 2 && preview.summary.skipped === 2, "Fan-sinf ruxsatlari to‘g‘ri ajratilmadi.");
+      expect(preview.rows[0].action === "add" && preview.rows.slice(1).every((row) => row.permissionDenied && row.action === "skip"), "Ruxsatsiz fan yoki sinf o‘tkazib yuborilmadi.");
+      const saved = await saveGradeImportDraft(draft, context);
+      expect(context.writes === 1 && saved.added === 1 && saved.skipped === 2 && context.state.db.grades.length === 1, "Faqat ruxsatli baho bitta yozuvda saqlanmadi.");
+      expect(context.state.db.grades[0].studentId === "permission-student-a" && context.state.db.grades[0].subject === "Matematika", "Noto‘g‘ri fan-sinf juftligi saqlandi.");
+      const resolved = draftFor([["Ali Valiyev", "Import fani", 8, "2026-10-04", "6-A"]]);
+      resolved.subjectChoices[normalizeImportName("Import fani")] = "Ona tili";
+      expect(buildGradeImportPreview(db, teacher, resolved).summary.permissionDenied === 1, "Tanlangan mavjud fan ruxsati tekshirilmadi.");
+      resolved.subjectChoices[normalizeImportName("Import fani")] = "Matematika";
+      expect(buildGradeImportPreview(db, teacher, resolved).ready, "Ruxsatli fanga moslash qabul qilinmadi.");
+      const revokedContext = contextFor(db);
+      db.teachers[0].assignments = [];
+      try { await saveGradeImportDraft(draft, revokedContext); } catch { /* Biriktirma saqlashdan oldin qayta tekshiriladi. */ }
+      expect(revokedContext.writes === 0 && revokedContext.state.db.grades.length === 0, "Bekor qilingan biriktirma saqlashda qayta tekshirilmadi.");
+    });
+    await test("Dasturchi barcha sinflar uchun baho import qila oladi", async () => {
+      const db = fixture(), context = contextFor(db, developer), draft = draftFor([
+        ["Ali Valiyev", "Matematika", 8, "2026-10-03", "6-A"],
+        ["Dilorom Karimova", "Matematika", 9, "2026-10-03", "5-B"],
+        ["Ali Valiyev", "Ona tili", 7, "2026-10-03", "6-A"],
+        ["Dilorom Karimova", "Ona tili", 6, "2026-10-03", "5-B"],
+      ]), preview = buildGradeImportPreview(db, developer, draft);
+      expect(preview.ready && preview.summary.permissionDenied === 0 && preview.summary.added === 4, "Dasturchiga o‘qituvchi cheklovi qo‘llandi.");
+      await saveGradeImportDraft(draft, context);
+      expect(context.writes === 1 && context.state.db.grades.length === 4, "Dasturchi barcha fan-sinf juftliklariga saqlay olmadi.");
+    });
+    console.table(checks);
+    return checks;
+  };
+  window.runImportTests = async function () {
+    const checks = [],
+      expect = (condition, message) => {
+        if (!condition) throw new Error(message);
+      },
+      test = async (name, fn) => {
+        try {
+          await fn();
+          checks.push({ test: name, result: "passed" });
+        } catch (error) {
+          checks.push({ test: name, result: "failed", detail: error.message });
+        }
+      },
+      developer = { role: "developer" },
+      teacher = { role: "teacher", teacherId: "import-teacher-a" },
+      fixture = () => ({
+        settings: { gradeMin: 1, gradeMax: 10 },
+        subjects: ["Matematika", "Ona tili"],
+        classes: [
+          { id: "import-class-a", name: "5-A", grade: 5, section: "A", teacherId: "import-teacher-a" },
+          { id: "import-class-b", name: "5-B", grade: 5, section: "B", teacherId: "import-teacher-b" },
+        ],
+        teachers: [
+          { id: "import-teacher-a", active: true, assignments: [{ classId: "import-class-a", subjectId: subjectIdForName("Matematika") }] },
+          { id: "import-teacher-b", active: true, assignments: [] },
+        ],
+        students: [
+          { id: "import-student-a", fullName: "Ali Valiyev", username: "import-ali", classId: "import-class-a", archived: false },
+          { id: "import-student-b", fullName: "Dilorom Karimova", username: "import-dilorom", classId: "import-class-b", archived: false },
+        ],
+        grades: [],
+        attendance: [],
+        importLog: [],
+      }),
+      draftFor = (rows, headers = ["F.I.Sh", "Fan", "Baho", "Sana"], options = {}) =>
+        createGradeImportDraft([headers, ...rows], "baholar-test.csv", options),
+      memoryContext = (db, user = developer) => {
+        const context = {
+          state: { db, user },
+          writes: 0,
+          saved: null,
+          saveData: async (data) => {
+            context.writes++;
+            context.saved = JSON.parse(JSON.stringify(data));
+          },
+        };
+        return context;
+      };
+
+    await test("F.I.Sh, Fan, Baho va Sana ustunlari avtomatik tanlanadi", () => {
+      const draft = draftFor([["Ali Valiyev", "Matematika", "8", "2026-10-03"]]);
+      expect(draft.mapping.studentName === "0" && draft.mapping.subject === "1" &&
+        draft.mapping.value === "2" && draft.mapping.date === "3", "Kerakli ustunlar avtomatik moslanmadi.");
+    });
+
+    await test("Shaxsiy identifikator va tanlanmagan ustun saqlanmaydi", async () => {
+      const db = fixture(),
+        privateValue = "99900112345678",
+        unusedValue = "IMPORT-TEST-PRIVATE-UNMAPPED",
+        draft = draftFor(
+          [["Ali Valiyev", "Matematika", "8", "2026-10-03", privateValue, unusedValue]],
+          ["F.I.Sh", "Fan", "Baho", "Sana", "PINFL", "Tanlanmagan ustun"],
+        ),
+        blocked = draft.headers.find((header) => header.blocked),
+        context = memoryContext(db);
+      expect(blocked && !Object.values(draft.mapping).includes(String(blocked.index)), "Shaxsiy identifikator ustuni tanlandi.");
+      await saveGradeImportDraft(draft, context);
+      const stored = JSON.stringify(context.saved);
+      expect(context.writes === 1 && context.state.db.grades.length === 1, "To‘g‘ri qator bitta yozuvda saqlanmadi.");
+      expect(!stored.includes(privateValue) && !stored.includes(unusedValue), "Shaxsiy yoki tanlanmagan ustun xotiraga yozildi.");
+      expect(context.state.db.grades[0].comment === "Platforma importi", "Import izohi qo‘yilmadi.");
+      const unsafeDraft = draftFor([["Ali Valiyev", "Matematika", "9", "2026-10-04", privateValue]], ["F.I.Sh", "Fan", "Baho", "Sana", "PINFL"]),
+        unsafeContext = memoryContext(fixture());
+      unsafeDraft.mapping.studentName = "4";
+      try { await saveGradeImportDraft(unsafeDraft, unsafeContext); } catch { /* Rad etish kutiladi. */ }
+      expect(unsafeContext.writes === 0 && unsafeContext.state.db.grades.length === 0, "Taqiqlangan ustun majburan tanlanganda saqlandi.");
+    });
+
+    await test("Bir xil ism AMBIGUOUS bo‘ladi va tanlovsiz saqlanmaydi", async () => {
+      const db = fixture();
+      db.students.push({ id: "import-student-duplicate", fullName: "  ALI   VALIYEV  ", classId: "import-class-b", archived: false });
+      const draft = draftFor([["Ali Valiyev", "Matematika", "8", "2026-10-03"]]),
+        preview = buildGradeImportPreview(db, developer, draft),
+        ambiguous = preview.groups.find((group) => group.status === "AMBIGUOUS"),
+        context = memoryContext(db);
+      expect(ambiguous && !preview.ready, "Takroriy ism noaniq deb belgilanmadi.");
+      try { await saveGradeImportDraft(draft, context); } catch { /* Tanlovsiz saqlash rad etilishi kutiladi. */ }
+      expect(context.writes === 0 && context.state.db.grades.length === 0, "Noaniq ism tanlovsiz saqlandi.");
+      draft.choices[ambiguous.key] = "import-student-a";
+      await saveGradeImportDraft(draft, context);
+      expect(context.writes === 1 && context.state.db.grades.length === 1 &&
+        context.state.db.grades[0].studentId === "import-student-a", "Tanlangan o‘quvchiga baho saqlanmadi.");
+    });
+
+    await test("0, 11 va 7.5 rad etiladi; 1 va 10 qabul qilinadi", () => {
+      const draft = draftFor([0, 11, 7.5, 1, 10].map((value, index) =>
+        ["Ali Valiyev", "Matematika", value, `2026-10-${String(index + 1).padStart(2, "0")}`])),
+        result = buildGradeImportData(fixture(), developer, draft),
+        values = result.data.grades.map((grade) => grade.value).sort((a, b) => a - b);
+      expect(values.length === 2 && values[0] === 1 && values[1] === 10 && result.rejected === 3,
+        "Baho chegarasi yoki butun son tekshiruvi noto‘g‘ri ishladi.");
+    });
+
+    await test("ISO, nuqtali sana va Excel sana katagi to‘g‘ri aylantiriladi", () => {
+      for (const [date, options] of [
+        ["2026-10-03", {}],
+        ["03.10.2026", {}],
+        [46298, { excel: true, date1904: false }],
+      ]) {
+        const draft = draftFor([["Ali Valiyev", "Matematika", "8", date]], undefined, options),
+          result = buildGradeImportData(fixture(), developer, draft);
+        expect(result.data.grades.length === 1 && result.data.grades[0].date === "2026-10-03", `${String(date)} sanasi to‘g‘ri aylantirilmadi.`);
+      }
+    });
+
+    await test("Bir faylni ikki marta import qilish bahoni takrorlamaydi", async () => {
+      const context = memoryContext(fixture()),
+        rows = [["Ali Valiyev", "Matematika", "8", "2026-10-03"]];
+      await saveGradeImportDraft(draftFor(rows), context);
+      const originalId = context.state.db.grades[0]?.id;
+      const repeated = buildGradeImportData(context.state.db, developer, draftFor(rows));
+      expect(repeated.added === 0 && repeated.updated === 0 && repeated.skipped === 1,
+        "Takroriy baho o‘tkazib yuborilmadi.");
+      await saveGradeImportDraft(draftFor(rows), context);
+      expect(context.state.db.grades.length === 1 && context.state.db.grades[0].id === originalId,
+        "Takroriy import yangi baho yaratdi.");
+      expect(context.state.db.importLog.length === 2, "Ikki import jurnalda qayd etilmadi.");
+    });
+
+    await test("O‘qituvchi ko‘ra olmaydigan sinfga baho import qila olmaydi", async () => {
+      const db = fixture(),
+        context = memoryContext(db, teacher),
+        draft = draftFor([
+          ["Ali Valiyev", "Matematika", "8", "2026-10-03"],
+          ["Dilorom Karimova", "Matematika", "9", "2026-10-03"],
+        ]);
+      await saveGradeImportDraft(draft, context);
+      expect(context.writes === 1 && context.state.db.grades.length === 1 &&
+        context.state.db.grades[0].studentId === "import-student-a", "Begona sinfga baho yozildi yoki ruxsatli baho saqlanmadi.");
+      const forbiddenDraft = draftFor([["Dilorom Karimova", "Matematika", "9", "2026-10-04"]]),
+        forbiddenContext = memoryContext(fixture(), teacher);
+      try { await saveGradeImportDraft(forbiddenDraft, forbiddenContext); } catch { /* Ruxsatsiz import rad etilishi kutiladi. */ }
+      expect(forbiddenContext.writes === 0 && forbiddenContext.state.db.grades.length === 0,
+        "Bevosita saqlash funksiyasi sinf ruxsatini chetlab o‘tdi.");
+      const changedAccessDb = fixture(),
+        changedDraft = draftFor([["Ali Valiyev", "Matematika", "8", "2026-10-05"]]);
+      expect(buildGradeImportPreview(changedAccessDb, teacher, changedDraft).ready, "Ruxsatli qator oldindan ko‘rishda qabul qilinmadi.");
+      changedAccessDb.teachers[0].assignments = [];
+      const changedContext = memoryContext(changedAccessDb, teacher);
+      try { await saveGradeImportDraft(changedDraft, changedContext); } catch { /* O‘zgargan ruxsat qayta tekshirilishi kutiladi. */ }
+      expect(changedContext.writes === 0 && changedContext.state.db.grades.length === 0,
+        "Oldindan ko‘rishdan so‘ng bekor qilingan ruxsat saqlashda qayta tekshirilmadi.");
+    });
+    console.table(checks);
+    return checks;
+  };
+
+  window.runNoRegistrationTests = async function () {
+    const checks = [],
+      expect = (condition, message) => {
+        if (!condition) throw new Error(message);
+      },
+      test = async (name, fn) => {
+        try {
+          await fn();
+          checks.push({ test: name, result: "passed" });
+        } catch (error) {
+          checks.push({ test: name, result: "failed", detail: error.message });
+        }
+      };
+    await test("Kirish oynalarida ro‘yxatdan o‘tish havolasi yo‘q", () => {
+      const removedLabel = ["Ro‘yxatdan", "o‘tish"].join(" ");
+      expect(["student", "teacher", "developer"].every((role) => !loginView(role).includes(removedLabel)), "Kirish oynalaridan birida havola ko‘rinadi.");
+    });
+    await test("Ro‘yxatdan o‘tish formasi va yo‘li manbadan olib tashlangan", async () => {
+      let source = [loginView, render, handleSubmit].map(String).join("\n");
+      try {
+        const response = await fetch(appScriptURL, { cache: "no-store" });
+        if (response.ok) source = await response.text();
+      } catch {
+        // file:// sahifalarida source fetch ishlamasa, UI va handler tekshiriladi.
+      }
+      const testMarker = "window.runNo" + "Registration" + "Tests",
+        testStart = source.indexOf(testMarker),
+        appSource = testStart >= 0 ? source.slice(0, testStart) : source,
+        forbidden = [
+          "#/student/" + "register",
+          'data-form="' + "registration" + '"',
+          "registrationView",
+          "registerStudent",
+          'kind === "' + "registration" + '"',
+        ];
+      expect(forbidden.every((token) => !appSource.includes(token)), "Ro‘yxatdan o‘tish kodi yoki yo‘li topildi.");
+      expect(!appSource.toLowerCase().includes(["reg", "istration"].join("")), "Ro‘yxatdan o‘tish holati ilova kodida qoldi.");
+    });
+    await test("O‘qituvchi o‘quvchi qo‘sha oladi va yangi login bilan kiriladi", async () => {
+      const teacherPassword = "Teacher-add-check-8572",
+        studentPassword = "Student-add-check-9463",
+        teacherHash = await Storage.hashPassword(teacherPassword),
+        developerHash = await Storage.hashPassword("Developer-add-check-3184"),
+        teacherId = "add-test-teacher",
+        items = new Map(),
+        storage = {
+          getItem: (key) => items.has(key) ? items.get(key) : null,
+          setItem: (key, value) => items.set(key, String(value)),
+          removeItem: (key) => items.delete(key),
+        },
+        db = migrateData({
+          auth: { teacherUsername: "add-test-teacher", teacherPasswordHash: teacherHash,
+            developerUsername: "add-test-developer", developerPasswordHash: developerHash },
+          teachers: [{ id: teacherId, fullName: "Sinov o‘qituvchisi", login: "add-test-teacher",
+            passwordHash: teacherHash, active: true, assignments: [] }],
+          students: [],
+        });
+      const klass = db.classes.find((item) => item.id === "class-5-a") || db.classes[0];
+      expect(Boolean(klass), "Sinov sinfi topilmadi.");
+      klass.teacherId = teacherId;
+      const context = {
+        state: { db, user: null, passwordChangeRequired: false, view: "overview", loginRole: "student" },
+        storage,
+        now: Date.now,
+        hash: "#/teacher/login",
+        getHash: () => context.hash,
+        setHash: (value) => { context.hash = value; },
+        render: async () => {},
+      };
+      await Storage.saveData(db, storage);
+      expect(await login("add-test-teacher", teacherPassword, context), "O‘qituvchi sinov hisobiga kira olmadi.");
+      expect(context.state.user.role === "teacher" && teacherCanManageStudents(teacherId, klass.id, db), "O‘qituvchining sinf huquqi topilmadi.");
+      const form = studentForm({ db, user: context.state.user, studentFormOpen: true });
+      expect(form.includes('data-form="student"') && form.includes(`value="${esc(klass.id)}"`), "O‘qituvchi uchun o‘quvchi qo‘shish shakli yoki o‘z sinfi topilmadi.");
+      const student = await appendStudentRecord(db, {
+        fullName: "Sinov yangi o‘quvchi",
+        username: "add-test-student",
+        password: studentPassword,
+        classId: klass.id,
+      });
+      await Storage.saveData(db, storage);
+      expect(student.passwordHash === await Storage.hashPassword(studentPassword) && !Object.prototype.hasOwnProperty.call(student, "password"), "O‘quvchi paroli xesh sifatida saqlanmadi.");
+      expect(await login(student.username, studentPassword, context), "Yangi o‘quvchi login bilan kira olmadi.");
+      expect(context.state.user.role === "student" && context.state.user.studentId === student.id, "Yangi login noto‘g‘ri foydalanuvchini ochdi.");
+    });
+    console.table(checks);
+    return checks;
+  };
+  window.runSessionTests = async function () {
+    const checks = [],
+      expect = (condition, message) => {
+        if (!condition) throw new Error(message);
+      },
+      test = async (name, fn) => {
+        try {
+          await fn();
+          checks.push({ test: name, result: "passed" });
+        } catch (error) {
+          checks.push({ test: name, result: "failed", detail: error.message });
+        }
+      },
+      password = "Session-check-7482",
+      roles = ["student", "teacher", "developer"],
+      makeContext = (db, storage, hash = "") => {
+        const context = {
+          state: { db, user: null, passwordChangeRequired: false, view: "overview" },
+          storage,
+          time: 1800000000000,
+          hash,
+          screen: "",
+          now: () => context.time,
+          getHash: () => context.hash,
+          setHash: (value) => { context.hash = value; },
+          render: async () => {
+            context.screen = !context.state.user ? "login"
+              : context.state.passwordChangeRequired ? "password-change" : "home";
+          },
+        };
+        return context;
+      },
+      fixture = async () => {
+        // Private in-memory storage: these tests never modify live accounts or sessions.
+        const items = new Map(),
+          storage = {
+            getItem: (key) => items.has(key) ? items.get(key) : null,
+            setItem: (key, value) => items.set(key, String(value)),
+            removeItem: (key) => items.delete(key),
+          },
+          passwordHash = await Storage.hashPassword(password),
+          db = {
+            auth: { developerUsername: "session-developer", developerPasswordHash: passwordHash },
+            teachers: [{ id: "session-teacher", login: "session-teacher", fullName: "Teacher", passwordHash, active: true }],
+            students: [{ id: "session-student", username: "session-student", fullName: "Student", passwordHash, archived: false }],
+          };
+        await Storage.saveData(db, storage);
+        return makeContext(db, storage);
+      },
+      signIn = async (context, role) => {
+        expect(await login(`session-${role}`, password, context), `${role}: kirish amalga oshmadi.`);
+      },
+      rejected = async (context) => {
+        expect(!await restoreSession(context), "Sessiya rad etilmadi.");
+        expect(context.state.user === null, "Foydalanuvchi tozalanmadi.");
+        expect(context.storage.getItem(SESSION_KEY) === null, "Sessiya kaliti o‘chirilmadi.");
+        expect(context.screen === "login", "Kirish oynasi ochilmadi.");
+      };
+    await test("Kirishdan so‘ng ayni foydalanuvchi va rol tiklanadi", async () => {
+      for (const role of roles) {
+        const context = await fixture(),
+          account = sessionAccount(context.state.db, role, role === "developer" ? "developer" : `session-${role}`);
+        expect(account.sessionVersion === 0, "Yangi versiya 0 bo‘lmadi.");
+        account.mustChangePassword = role !== "developer";
+        context.hash = `#/${role}/sinf/example`;
+        await signIn(context, role);
+        const original = context.storage.getItem(SESSION_KEY),
+          user = JSON.stringify(context.state.user),
+          refreshed = makeContext(cloneData(context.state.db), context.storage, context.hash);
+        refreshed.time++;
+        expect(await restoreSession(refreshed), `${role}: sessiya tiklanmadi.`);
+        expect(JSON.stringify(refreshed.state.user) === user, "Foydalanuvchi yoki rol o‘zgardi.");
+        expect(refreshed.hash === context.hash, "Joriy yo‘nalish saqlanmadi.");
+        expect(context.storage.getItem(SESSION_KEY) === original, "Tiklash sessiya muddatini uzaytirdi.");
+        expect(refreshed.state.passwordChangeRequired === (role !== "developer"), "Parol almashtirish talabi yo‘qoldi.");
+        refreshed.hash = role === "developer" ? "#/teacher/sinf/example" : "#/developer/joylash";
+        await restoreSession(refreshed);
+        expect(refreshed.hash === `#/${role}`, "Boshqa rol yo‘nalishi bosh sahifaga qaytmadi.");
+      }
+      const legacy = await fixture(),
+        db = cloneData(legacy.state.db);
+      delete db.auth.sessionVersion;
+      delete db.teachers[0].sessionVersion;
+      delete db.students[0].sessionVersion;
+      const migrated = migrateData(db);
+      expect([migrated.auth, ...migrated.teachers, ...migrated.students].every((record) => record.sessionVersion === 0), "Eski foydalanuvchilar versiyasi 0 bo‘lmadi.");
+      expect(migrated.students[0].passwordHash === legacy.state.db.students[0].passwordHash, "Migratsiya parolni o‘zgartirdi.");
+    });
+    await test("Chiqishdan so‘ng tiklash kirish oynasini ko‘rsatadi", async () => {
+      for (const role of roles) {
+        const context = await fixture();
+        await signIn(context, role);
+        await logout(context);
+        expect(context.storage.getItem(SESSION_KEY) === null, "Chiqish kalitni o‘chirmadi.");
+        await rejected(context);
+      }
+    });
+    await test("Muddati tugagan sessiya rad etiladi va kaliti o‘chiriladi", async () => {
+      const context = await fixture();
+      await signIn(context, "student");
+      const valid = JSON.parse(context.storage.getItem(SESSION_KEY));
+      expect(valid.expiresAt - valid.issuedAt === SESSION_DURATION, "Muddat 12 soat emas.");
+      for (const raw of [
+        JSON.stringify({ ...valid, issuedAt: context.time - SESSION_DURATION - 1, expiresAt: context.time - 1 }),
+        JSON.stringify({ ...valid, issuedAt: context.time - SESSION_DURATION, expiresAt: context.time }),
+        "{", "null", "[]", "{}",
+        JSON.stringify({ ...valid, role: "unknown" }),
+        JSON.stringify({ ...valid, sessionVersion: "0" }),
+        JSON.stringify({ ...valid, issuedAt: context.time + 1, expiresAt: context.time + 1 + SESSION_DURATION }),
+        JSON.stringify({ ...valid, userId: "missing-user" }),
+        JSON.stringify({ ...valid, password: "unexpected" }),
+      ]) {
+        context.storage.setItem(SESSION_KEY, raw);
+        await rejected(context);
+      }
+    });
+    await test("Nofaol o‘qituvchi sessiyasi rad etiladi", async () => {
+      const context = await fixture();
+      await signIn(context, "teacher");
+      const original = context.storage.getItem(SESSION_KEY),
+        teacher = context.state.db.teachers[0];
+      teacher.active = false;
+      await rejected(context);
+      await Storage.saveData(context.state.db, context.storage);
+      expect(teacher.sessionVersion === 1, "Nofaollashtirish versiyani oshirmadi.");
+      teacher.active = true;
+      await Storage.saveData(context.state.db, context.storage);
+      context.storage.setItem(SESSION_KEY, original);
+      await rejected(context);
+      const studentContext = await fixture();
+      await signIn(studentContext, "student");
+      studentContext.state.db.students[0].archived = true;
+      await Storage.saveData(studentContext.state.db, studentContext.storage);
+      expect(studentContext.state.db.students[0].sessionVersion === 1, "Arxivlash versiyani oshirmadi.");
+      await rejected(studentContext);
+      for (const role of roles) {
+        const deleted = await fixture();
+        await signIn(deleted, role);
+        if (role === "developer") delete deleted.state.db.auth.developerUsername;
+        else deleted.state.db[role === "student" ? "students" : "teachers"] = [];
+        await Storage.saveData(deleted.state.db, deleted.storage);
+        await rejected(deleted);
+      }
+    });
+    await test("Parol o‘zgargach eski sessiya rad etiladi", async () => {
+      for (const role of roles) {
+        const context = await fixture();
+        await signIn(context, role);
+        const old = context.storage.getItem(SESSION_KEY),
+          account = sessionAccount(context.state.db, role, sessionUserId(context.state.user));
+        account[role === "developer" ? "developerPasswordHash" : "passwordHash"] = await Storage.hashPassword("Changed-session-9637");
+        await Storage.saveData(context.state.db, context.storage);
+        expect(account.sessionVersion === 1, "Parol o‘zgarishi versiyani oshirmadi.");
+        saveSession(context);
+        expect(await restoreSession(context), "Yangilangan sessiya tiklanmadi.");
+        context.storage.setItem(SESSION_KEY, old);
+        await rejected(context);
+        await login(`session-${role}`, "Changed-session-9637", context);
+        invalidateUserSessions(account);
+        await Storage.saveData(context.state.db, context.storage);
+        expect(account.sessionVersion === 2, "Bir xil parolga qaytarish versiyani oshirmadi.");
+        await rejected(context);
+      }
+    });
+    await test("Sessiyada parol, passwordHash yoki xesh matni saqlanmaydi", async () => {
+      for (const role of roles) {
+        const context = await fixture();
+        await signIn(context, role);
+        const raw = context.storage.getItem(SESSION_KEY),
+          session = JSON.parse(raw),
+          allowed = ["role", "userId", "sessionVersion", "issuedAt", "expiresAt"];
+        expect(Object.keys(session).length === allowed.length && allowed.every((key) => Object.prototype.hasOwnProperty.call(session, key)), "Ortiqcha yoki yetishmagan sessiya maydoni bor.");
+        expect(!/password|hash/i.test(raw) && !raw.includes(password) && !/[a-f0-9]{64}/i.test(raw), "Sessiyada parol yoki xesh bor.");
+        expect(!Object.prototype.hasOwnProperty.call(session, "username"), "Sessiyada login bor.");
+      }
+    });
+    console.table(checks);
+    return checks;
+  };
+  window.runAllTests = async function () {
+    const checks = [],
+      test = async (name, fn) => {
+        try {
+          await fn();
+          checks.push({ test: name, result: "OK" });
+        } catch (error) {
+          checks.push({ test: name, result: "XATO", detail: error.message });
+        }
+      },
+      expect = (condition, message) => {
+        if (!condition) throw new Error(message);
+      };
+    await test("Manbada standart parol matnlari yo‘q", async () => {
+      let response;
+      try {
+        response = await fetch(appScriptURL, { cache: "no-store" });
+      } catch {
+        checks.push({ test: "Manbada standart parol matnlari yo‘q", result: "O‘TKAZILDI", detail: "Brauzer file:// rejimida script.js ni o‘qishga ruxsat bermadi." });
+        return;
+      }
+      if (!response.ok) throw new Error(`Manba fayli o‘qilmadi (${response.status}).`);
+      const source = await response.text();
+      const forbidden = [
+        ["teacher", "123"].join(""),
+        ["developer", "123"].join(""),
+        ["demo", "123"].join(""),
+      ];
+      expect(forbidden.every((value) => !source.includes(value)), "Standart parol matni manbada topildi.");
+    });
+    await test("Kirish oynalarida o‘zini ro‘yxatdan o‘tkazish yo‘q", () => {
+      const removedLabel = ["Ro‘yxatdan", "o‘tish"].join(" ");
+      expect(["student", "teacher", "developer"].every((role) => !loginView(role).includes(removedLabel)), "Kirish oynalaridan birida havola ko‘rinadi.");
+    });
+    await test("O‘qituvchi boshqa sinfga o‘quvchi biriktira olmaydi", () => {
+      const fixture = {
+        teachers: [{ id: "ta", assignments: [] }, { id: "tb", assignments: [] }],
+        classes: [{ id: "ca", teacherId: "ta" }, { id: "cb", teacherId: "tb" }],
+      };
+      expect(!teacherCanManageStudents("ta", "cb", fixture), "Boshqa o‘qituvchining sinfi tahrirlashga ruxsat berdi.");
+    });
+    await test("Takror fan-sinf biriktirmasi rad etiladi", () => {
+      const fixture = {
+        teachers: [{ id: "t", assignments: [{ classId: "c", subjectId: "s" }] }],
+        classes: [{ id: "c", grade: 1 }],
+        curriculum: [{ grade: 1, subjectId: "s" }],
+      };
+      const result = addAssignment(fixture, "t", "c", "s");
+      expect(!result.ok && result.message === "Bu fan bu sinf uchun allaqachon biriktirilgan.", "Takror biriktirma qabul qilindi.");
+    });
+    await test("O‘quv rejasidan tashqari fan rad etiladi", () => {
+      const fixture = {
+        teachers: [{ id: "t", assignments: [] }],
+        classes: [{ id: "c", grade: 1 }],
+        curriculum: [{ grade: 1, subjectId: "s" }],
+      };
+      const result = addAssignment(fixture, "t", "c", "outside");
+      expect(!result.ok && result.message === "Bu fan 1-sinf o‘quv rejasida yo‘q.", "O‘quv rejasidan tashqari fan qabul qilindi.");
+    });
+    await test("Sinf rahbarini almashtirish tasdiq so‘raydi", () => {
+      const fixture = {
+        teachers: [{ id: "ta", assignments: [] }, { id: "tb", assignments: [] }],
+        classes: [{ id: "c", grade: 1, teacherId: "tb" }],
+      };
+      const before = JSON.stringify(fixture),
+        result = setClassTeacher(fixture, "c", "ta");
+      expect(!result.ok && result.message === "Bu sinfda allaqachon sinf rahbari bor. Almashtirilsinmi?", "Tasdiqsiz almashtirishga ruxsat berildi.");
+      expect(JSON.stringify(fixture) === before, "Sof funksiya kiruvchi ma’lumotni o‘zgartirdi.");
+    });
+    await test("10 ballik baho chegarasi butun sonlarni tekshiradi", () => {
+      const fixture = { settings: { gradeMin: 1, gradeMax: 10 } };
+      expect([0, 11, 7.5].every((value) => !validGradeValue(fixture, value)), "Noto‘g‘ri baholardan biri qabul qilindi.");
+      expect(validGradeValue(fixture, 1) && validGradeValue(fixture, 10), "1 yoki 10 baho rad etildi.");
+    });
+    await test("8.5 o‘rtacha va jarimalar 78 ball beradi", () => {
+      const fixture = {
+        settings: { weights: { avgMultiplier: 10, unexcusedAbsencePenalty: 3, skippedLessonPenalty: 2 } },
+        students: [{ id: "s", fullName: "Test O‘quvchi", classId: "c" }],
+        grades: [
+          { studentId: "s", date: "2026-10-12", value: 8 },
+          { studentId: "s", date: "2026-10-13", value: 9 },
+        ],
+        attendance: [{ studentId: "s", date: "2026-10-12", status: "unexcused", skippedLessons: 2 }],
+      };
+      const rating = calculateRatings(fixture, "2026-10-12")[0];
+      expect(rating.avg === 8.5 && rating.score === 78, JSON.stringify(rating));
+    });
+    await test("CSV joylash sinf yaratadi va avvalgi bahoni saqlaydi", () => {
+      const fixture = cloneData(state.db),
+        newClassName = "11-Z";
+      fixture.classes = fixture.classes.filter((klass) => normalizedLogin(klass.name) !== normalizedLogin(newClassName));
+      fixture.students.push({ id: "placement-test-student", externalId: "placement-test-id", fullName: "Oldingi Ism", username: "placement-test-login", passwordHash: "a".repeat(64), classId: null });
+      fixture.grades.push({ id: "placement-test-grade", studentId: "placement-test-student", subject: fixture.subjects[0], value: 7, date: "2026-10-12", comment: "saqlansin" });
+      const pending = {
+        fileName: "test.csv",
+        valid: [{ externalId: "placement-test-id", fullName: "Yangi Ism", className: newClassName, username: "placement-test-login", passwordHash: "b".repeat(64) }],
+        rejected: [],
+        fileIds: ["placement-test-id"],
+        newClasses: [newClassName],
+      };
+      const result = buildPlacementData(fixture, pending, { mustChangePassword: true, archiveMissing: false }),
+        student = result.db.students.find((item) => item.id === "placement-test-student"),
+        grade = result.db.grades.find((item) => item.id === "placement-test-grade");
+      expect(result.added === 0 && result.updated === 1, "Mavjud o‘quvchi yangilanmadi.");
+      expect(result.db.classes.some((klass) => klass.name === newClassName) && student.fullName === "Yangi Ism" && student.classId, "Sinf yoki o‘quvchi yangilanishi amalga oshmadi.");
+      expect(grade?.value === 7 && grade.comment === "saqlansin", "Avvalgi baho o‘zgardi yoki yo‘qoldi.");
+    });
+    await test("Parol bo‘shliq va katta harf bilan yozilganda ham taniladi", async () => {
+      const hash = await Storage.hashPassword("sokin-kamal-ziyo");
+      expect(await passwordMatches("Sokin Kamal Ziyo", hash), "Bo‘shliq bilan yozilgan parol tanilmadi.");
+      expect(await passwordMatches("SOKIN-KAMAL-ZIYO", hash), "Katta harf bilan yozilgan parol tanilmadi.");
+    });
+    console.table(checks);
+    return checks;
+  };
+  window.runRatingTests = function () {
+    const base = {
+      settings: {
+        weights: {
+          avgMultiplier: 20,
+          unexcusedAbsencePenalty: 3,
+          skippedLessonPenalty: 2,
+        },
+      },
+      students: [],
+      grades: [],
+      attendance: [],
+    };
+    const checks = [];
+    const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    const test = (name, fn) => {
+      try {
+        fn();
+        checks.push({ test: name, result: "OK" });
+      } catch (e) {
+        checks.push({ test: name, result: "XATO", detail: e.message });
+      }
+    };
+    test("Baholar bo‘lmasa o‘rtacha baho null va ball 0", () => {
+      const d = { ...base, students: [{ id: "a", fullName: "Ali" }] };
+      const r = calculateRatings(d, "2026-10-12")[0];
+      if (r.avg !== null || r.score !== 0) throw Error(JSON.stringify(r));
+    });
+    test("Teng ballarda tartib: o‘rtacha baho, so‘ng ism", () => {
+      const d = {
+        ...base,
+        students: [
+          { id: "z", fullName: "Zebo" },
+          { id: "b", fullName: "Botir" },
+          { id: "a", fullName: "Ali" },
+        ],
+        grades: [
+          { studentId: "z", date: "2026-10-12", value: 4 },
+          { studentId: "b", date: "2026-10-12", value: 4 },
+          { studentId: "a", date: "2026-10-12", value: 4 },
+        ],
+      };
+      const r = calculateRatings(d, "2026-10-12");
+      if (
+        !eq(
+          r.map((x) => x.fullName),
+          ["Ali", "Botir", "Zebo"],
+        ) ||
+        !eq(
+          r.map((x) => x.rank),
+          [1, 2, 3],
+        )
+      )
+        throw Error(JSON.stringify(r));
+    });
+    test("Ishlangan misol 83 ball", () => {
+      const d = {
+        ...base,
+        students: [{ id: "a", fullName: "Ali" }],
+        grades: [
+          { studentId: "a", date: "2026-10-12", value: 4 },
+          { studentId: "a", date: "2026-10-13", value: 5 },
+        ],
+        attendance: [
+          {
+            studentId: "a",
+            date: "2026-10-12",
+            status: "unexcused",
+            skippedLessons: 2,
+          },
+        ],
+      };
+      const r = calculateRatings(d, "2026-10-12")[0];
+      if (r.avg !== 4.5 || r.score !== 83) throw Error(JSON.stringify(r));
+    });
+    test("Faqat sababli kelmagan kun jarima bermaydi", () => {
+      const d = {
+        ...base,
+        students: [{ id: "a", fullName: "Ali" }],
+        attendance: [
+          {
+            studentId: "a",
+            date: "2026-10-12",
+            status: "excused",
+            skippedLessons: 0,
+          },
+        ],
+      };
+      const r = calculateRatings(d, "2026-10-12")[0];
+      if (r.unexcusedDays !== 0 || r.score !== 0)
+        throw Error(JSON.stringify(r));
+    });
+    console.table(checks);
+    return checks;
+  };
+  window.runCurriculumTests = function () {
+    const checks = [],
+      eq = (a, b) => JSON.stringify(a) === JSON.stringify(b),
+      test = (name, fn) => {
+        try {
+          fn();
+          checks.push({ test: name, result: "OK" });
+        } catch (e) {
+          checks.push({ test: name, result: "XATO", detail: e.message });
+        }
+      };
+    test("1-sinf faqat 5–9-sinflarda o‘tiladigan fanni olmaydi", () => {
+      const id = subjectIdForName("Geometriya");
+      if (curriculumAllows(1, id) || !curriculumAllows(7, id))
+        throw Error("Bosqich bo‘yicha fan filtri noto‘g‘ri.");
+    });
+    test("Jadval fan tanlovida faqat shu bosqich rejasidagi fanlar bor", () => {
+      const options = scheduleSubjectOptions(1, subjectIdForName("Geometriya"));
+      if (options.includes("Geometriya") || !options.includes("Ona tili"))
+        throw Error("Jadval tanlovida reja tashqarisidagi fan ko‘rindi.");
+    });
+    test("Migratsiya 5-A sinfni 5-bosqich qiladi, baho va davomatni saqlaydi", () => {
+      const grades = [
+          {
+            id: "g1",
+            studentId: "s1",
+            subject: "Matematika",
+            value: 5,
+            date: "2026-10-12",
+            comment: "",
+          },
+        ],
+        attendance = [
+          {
+            studentId: "s1",
+            date: "2026-10-12",
+            status: "present",
+            skippedLessons: 0,
+          },
+        ],
+        legacy = {
+          version: 1,
+          settings: {
+            weights: {
+              avgMultiplier: 20,
+              unexcusedAbsencePenalty: 3,
+              skippedLessonPenalty: 2,
+            },
+            gradeMin: 2,
+            gradeMax: 5,
+            lessonsPerDay: 7,
+            showRankingToStudents: false,
+          },
+          auth: {
+            teacherUsername: "teacher",
+            teacherPasswordHash: "a".repeat(64),
+          },
+          classes: [{ id: "class-5a", name: "5-A" }],
+          students: [],
+          subjects: ["Matematika"],
+          grades,
+          attendance,
+          weeklySnapshots: [],
+        };
+      const migrated = migrateData(legacy);
+      if (
+        migrated.classes[0].grade !== 5 ||
+        !eq(migrated.grades, grades) ||
+        !eq(migrated.attendance, attendance)
+      )
+        throw Error("Migratsiya mavjud yozuvlarni o‘zgartirdi.");
+    });
+    test("Jadvalda ishlatiladigan fanni o‘chirib bo‘lmaydi", () => {
+      const name = "Geometriya",
+        data = {
+          grades: [],
+          curriculum: [],
+          timetable: [{ subjectId: subjectIdForName(name) }],
+        };
+      if (canDeleteSubject(data, name))
+        throw Error("Jadvaldagi fan o‘chirishga ruxsat berildi.");
+    });
+    test("Noto‘g‘ri sinf qatori xabar qilinadi, yaroqli qator qabul qilinadi", () => {
+      const parsed = parseCurriculumRows(
+        [
+          ["grade", "subject", "weekly_hours"],
+          ["12", "Noma’lum fan", ""],
+          ["5", "Matematika", "4"],
+        ],
+        ["Matematika"],
+      );
+      if (
+        parsed.errors.length !== 1 ||
+        parsed.valid.length !== 1 ||
+        parsed.valid[0].grade !== 5
+      )
+        throw Error(JSON.stringify(parsed));
+    });
+    console.table(checks);
+    return checks;
+  };
+  window.runTimetableTests = function () {
+    const checks = [],
+      eq = (a, b) => JSON.stringify(a) === JSON.stringify(b),
+      test = (name, fn) => {
+        try {
+          fn();
+          checks.push({ test: name, result: "OK" });
+        } catch (e) {
+          checks.push({ test: name, result: "XATO", detail: e.message });
+        }
+      },
+      rng = () => 0.37;
+    test("Migratsiya B, D, E sinflarini yaratadi va takroran ishlaganda o‘zgarmaydi", () => {
+      const legacy = {
+        version: 1,
+        settings: {
+          weights: {
+            avgMultiplier: 20,
+            unexcusedAbsencePenalty: 3,
+            skippedLessonPenalty: 2,
+          },
+          gradeMin: 2,
+          gradeMax: 5,
+          lessonsPerDay: 7,
+          showRankingToStudents: false,
+        },
+        auth: { teacherUsername: "teacher" },
+        classes: GRADES.map((grade) => ({
+          id: `class-${grade}-a`,
+          name: `${grade}-A`,
+        })),
+        students: [
+          {
+            id: "s1",
+            classId: "class-5-a",
+            fullName: "Ali",
+            username: "ali",
+            passwordHash: "a".repeat(64),
+          },
+        ],
+        subjects: ["Matematika"],
+        grades: [
+          {
+            id: "g1",
+            studentId: "s1",
+            subject: "Matematika",
+            value: 5,
+            date: "2026-10-12",
+            comment: "",
+          },
+        ],
+        attendance: [
+          {
+            studentId: "s1",
+            date: "2026-10-12",
+            status: "present",
+            skippedLessons: 0,
+          },
+        ],
+        timetable: [
+          {
+            id: "l1",
+            classId: "class-5-a",
+            day: 1,
+            lesson: 1,
+            subjectId: subjectIdForName("Matematika"),
+          },
+        ],
+        weeklySnapshots: [],
+      };
+      const originalGrades = JSON.stringify(legacy.grades),
+        originalAttendance = JSON.stringify(legacy.attendance),
+        first = migrateData(legacy),
+        once = JSON.stringify(first);
+      if (
+        first.classes.length !== 44 ||
+        first.classes.some((c) => !c.grade || !c.section) ||
+        !first.classes.some((c) => c.name === "5-A" && c.grade === 5)
+      )
+        throw Error("44 sinf yoki 5-A bosqichi noto‘g‘ri.");
+      for (const grade of GRADES)
+        for (const section of STANDARD_SECTIONS)
+          if (
+            first.classes.filter((c) => c.name === `${grade}-${section}`)
+              .length !== 1
+          )
+            throw Error(
+              `Sinf yetishmaydi yoki takrorlangan: ${grade}-${section}`,
+            );
+      migrateData(first);
+      if (JSON.stringify(first) !== once)
+        throw Error("Ikkinchi migratsiya ma’lumotni o‘zgartirdi.");
+      if (
+        JSON.stringify(first.grades) !== originalGrades ||
+        JSON.stringify(first.attendance) !== originalAttendance ||
+        first.students[0].id !== "s1" ||
+        first.timetable[0].weekday !== 1 ||
+        first.timetable[0].lessonNo !== 1
+      )
+        throw Error(
+          "O‘quvchi, baho, davomat yoki jadval migratsiyada o‘zgardi.",
+        );
+    });
+    test("Yangi o‘rnatish 44 ta A, B, D, E sinfini beradi", () => {
+      const classes = defaultClasses();
+      if (
+        classes.length !== 44 ||
+        new Set(classes.map((c) => c.name)).size !== 44
+      )
+        throw Error(`${classes.length} sinf topildi.`);
+    });
+    test("7 va 5 darsli kunlarda barcha 6 kun kataklari to‘ladi", () => {
+      const rows = GRADES.slice(0, 4).map((grade) => ({
+        grade,
+        subjectId: `s${grade}`,
+        weeklyHours: null,
+      }));
+      for (const perDay of [7, 5]) {
+        const result = generateTimetable(1, perDay, rows, rng);
+        if (result.error || result.rows.length !== 6 * perDay)
+          throw Error(JSON.stringify(result));
+        for (let weekday = 1; weekday <= 6; weekday++) {
+          const day = result.rows.filter((row) => row.weekday === weekday);
+          if (
+            day.length !== perDay ||
+            new Set(day.map((row) => row.lessonNo)).size !== perDay
+          )
+            throw Error(`${weekday}-kun darslari soni noto‘g‘ri.`);
+        }
+      }
+    });
+    test("Belgilangan haftalik soatlar joylashsa aynan saqlanadi", () => {
+      const planned = [
+          ["ona", 4],
+          ["mat", 3],
+          ["tab", 5],
+        ],
+        result = generateTimetable(
+          5,
+          2,
+          planned.map(([subjectId, weeklyHours]) => ({
+            grade: 5,
+            subjectId,
+            weeklyHours,
+          })),
+          rng,
+        );
+      if (result.error || result.warning) throw Error(JSON.stringify(result));
+      for (const [subjectId, hours] of planned)
+        if (
+          result.rows.filter((row) => row.subjectId === subjectId).length !==
+          hours
+        )
+          throw Error(`${subjectId}: reja va jadval soati mos emas.`);
+    });
+    test("Imkon bo‘lsa bir kunda bir fan takrorlanmaydi", () => {
+      const result = generateTimetable(
+        5,
+        2,
+        ["ona", "mat", "tar"].map((subjectId) => ({
+          grade: 5,
+          subjectId,
+          weeklyHours: 4,
+        })),
+        rng,
+      );
+      if (result.error || result.repeats !== 0)
+        throw Error(JSON.stringify(result));
+      for (let weekday = 1; weekday <= 6; weekday++)
+        if (
+          new Set(
+            result.rows
+              .filter((row) => row.weekday === weekday)
+              .map((row) => row.subjectId),
+          ).size !== 2
+        )
+          throw Error(`${weekday}-kunda takror bor.`);
+    });
+    test("Bir darajadagi takror nom qabul qilinmaydi", () => {
+      const data = {
+        classes: [{ id: "a", grade: 5, name: "5-A", section: "A" }],
+      };
+      if (
+        !classNameExists(data, 5, "A") ||
+        !classNameExists(data, 5, "5-A") ||
+        classNameExists(data, 5, "B")
+      )
+        throw Error("Sinf nomi tekshiruvi noto‘g‘ri.");
+    });
+    test("O‘quvchisi bor sinfni o‘chirish bloklanadi", () => {
+      const data = { students: [{ classId: "c" }], timetable: [] },
+        blocked = classDeletionBlock(data, "c");
+      if (blocked.students !== 1 || blocked.lessons !== 0)
+        throw Error(JSON.stringify(blocked));
+    });
+    test("Mavjud jadval ustiga yozishdan oldin tasdiq so‘raladi", () => {
+      let prompt = "";
+      const accepted = confirmRandomTimetableOverwrite(
+        [{ id: "1" }, { id: "2" }],
+        (message) => {
+          prompt = message;
+          return false;
+        },
+      );
+      if (accepted || !prompt.includes("2 ta"))
+        throw Error("Mavjud darslar uchun tasdiq so‘ralmadi.");
+    });
+    test("Soatlar sig‘masa kamaytirish ogohlantirishi qaytadi", () => {
+      const rows = Array.from({ length: 8 }, (_, i) => ({
+          grade: 1,
+          subjectId: `overflow-${i}`,
+          weeklyHours: 12,
+        })),
+        result = generateTimetable(1, 1, rows, rng);
+      if (
+        result.warning !== "Soatlar sig‘madi, ayrim fanlar kamaytirildi" ||
+        result.rows.length !== 6
+      )
+        throw Error(JSON.stringify(result));
+    });
+    console.table(checks);
+    return checks;
+  };
+  window.__sinfDaftari = {
+    getData: () => state.db,
+    restoreSession: () => restoreSession(),
+    runSessionTests: window.runSessionTests,
+    runImportTests: window.runImportTests,
+    runImportPermissionTests: window.runImportPermissionTests,
+    runNoRegistrationTests: window.runNoRegistrationTests,
+    calculateRatings,
+    runRatingTests: window.runRatingTests,
+    runCurriculumTests: window.runCurriculumTests,
+    runTimetableTests: window.runTimetableTests,
+    generateTimetable,
+    migrateData,
+    ensureStandardSections,
+    defaultClasses,
+    classNameExists,
+    classDeletionBlock,
+    confirmRandomTimetableOverwrite,
+  };
+
+  (async () => {
+    try {
+      state.db = await loadData();
+      validateData(state.db);
+      await restoreSession();
+    } catch (error) {
+      root.innerHTML = `<div class="login-page"><div class="login-panel"><div class="login-card"><h2>Ma’lumotni ochib bo‘lmadi</h2><p>${esc(error.message)}</p><p class="small muted">Brauzerning mahalliy xotirasi mavjudligini tekshiring.</p></div></div></div>`;
+    }
+  })();
+})();
